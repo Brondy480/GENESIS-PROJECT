@@ -25,7 +25,4 @@ logs/
 # Environment (do not commit real env files)  
 .env  
 .env.*  
-!.env.example 
-  
-# Large media files (too big for Git)  
-frontend/genesis-frontend/video-assets/ 
+!.env.example
