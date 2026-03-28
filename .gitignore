@@ -1,0 +1,31 @@
+# Git  
+  
+# Dependencies  
+node_modules/  
+package-lock.json  
+  
+# Build outputs  
+dist/  
+build/  
+*.local  
+  
+# IDE  
+.vscode/  
+.idea/  
+*.swp  
+  
+# OS  
+.DS_Store  
+Thumbs.db  
+  
+# Logs  
+logs/  
+*.log  
+  
+# Environment (do not commit real env files)  
+.env  
+.env.*  
+!.env.example 
+  
+# Large media files (too big for Git)  
+frontend/genesis-frontend/video-assets/ 
