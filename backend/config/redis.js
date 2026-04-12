@@ -1,18 +1,41 @@
-import Redis from "ioredis";
+import { createClient } from "redis";
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD || undefined,
-  tls: process.env.REDIS_USE_TLS === "true" ? {} : undefined,
-});
+let redisClient = null;
 
-redis.on("connect", () => {
-  console.log("✅ Redis connected");
-});
+const connectRedis = async () => {
+  try {
+    const config = {
+      socket: {
+        host: process.env.REDIS_HOST || "127.0.0.1",
+        port: parseInt(process.env.REDIS_PORT) || 6379,
+      },
+      password: process.env.REDIS_PASSWORD || undefined,
+    };
 
-redis.on("error", (err) => {
-  console.error("❌ Redis Error:", err);
-});
+    // Enable TLS for Redis Cloud
+    if (process.env.REDIS_USE_TLS === "true") {
+      config.socket.tls = true;
+    }
 
-export default redis;  
+    redisClient = createClient(config);
+
+    redisClient.on("error", (err) => {
+      console.log("Redis Client Error:", err.message);
+    });
+
+    redisClient.on("connect", () => {
+      console.log("Redis connected successfully");
+    });
+
+    await redisClient.connect();
+    return redisClient;
+
+  } catch (error) {
+    console.log("Redis connection failed - continuing without cache:", error.message);
+    redisClient = null;
+    return null;
+  }
+};
+
+export { redisClient, connectRedis };
+export default connectRedis;
