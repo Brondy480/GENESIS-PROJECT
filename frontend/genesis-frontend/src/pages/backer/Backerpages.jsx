@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Heart, FolderKanban, Bookmark, ArrowDown, ArrowUp, CheckCircle, AlertCircle, BookmarkX } from "lucide-react";
-import api from "../../api/axios";
+import { getMyFundings, getSavedProjects, unsaveProject, getMyWallet, getMyProfile, updateProfile } from "../../api/backer";
 
 // ─────────────────────────────────────────────
 // MY FUNDINGS
@@ -10,7 +10,7 @@ export function BackerFundings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/projectsFunding/my-fundings")
+    getMyFundings()
       .then(r => setFundings(r.data.fundings || r.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -28,9 +28,9 @@ export function BackerFundings() {
       {/* Summary */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 28 }}>
         {[
-          { label: "Total Contributed", value: `$${total.toLocaleString()}`, color: "#EC4899" },
+          { label: "Total Contributed", value: `${total.toLocaleString()} FCFA`, color: "#EC4899" },
           { label: "Projects Backed", value: fundings.length, color: "#7C3AED" },
-          { label: "Avg. Contribution", value: fundings.length ? `$${Math.round(total / fundings.length).toLocaleString()}` : "—", color: "#10B981" },
+          { label: "Avg. Contribution", value: fundings.length ? `${Math.round(total / fundings.length).toLocaleString()} FCFA` : "—", color: "#10B981" },
         ].map(c => (
           <div key={c.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "18px 20px" }}>
             <div style={{ color: "#555", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>{c.label}</div>
@@ -73,7 +73,7 @@ export function BackerFundings() {
                 <div style={{ color: "#555", fontSize: 11, marginTop: 1 }}>{f.project?.category || "—"}</div>
               </div>
             </div>
-            <div style={{ color: "#EC4899", fontWeight: 700, fontSize: 14 }}>${f.amount?.toLocaleString()}</div>
+            <div style={{ color: "#EC4899", fontWeight: 700, fontSize: 14 }}>{f.amount?.toLocaleString()} FCFA</div>
             <div style={{ color: "#888", fontSize: 12, textTransform: "capitalize" }}>{f.paymentMethod?.replace("_", " ") || "Card"}</div>
             <div style={{ color: "#555", fontSize: 12 }}>{f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}</div>
           </div>
@@ -94,7 +94,7 @@ export function BackerSaved() {
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
   useEffect(() => {
-    api.get("/publicProject/saved")
+    getSavedProjects()
       .then(r => setSaved(r.data.saved || r.data || []))
       .catch(() => setSaved([]))
       .finally(() => setLoading(false));
@@ -102,7 +102,7 @@ export function BackerSaved() {
 
   const unsave = async (projectId) => {
     try {
-      await api.post(`/publicProject/${projectId}/save`);
+      await unsaveProject(projectId);
       setSaved(prev => prev.filter(p => p._id !== projectId));
       showToast("Project removed from saved");
     } catch (e) { showToast("Failed to remove", "error"); }
@@ -166,7 +166,7 @@ export function BackerWallet() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/wallet/my").then(r => setWallet(r.data.wallet || r.data)).catch(console.error).finally(() => setLoading(false));
+    getMyWallet().then(r => setWallet(r.data.wallet || r.data)).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -186,13 +186,13 @@ export function BackerWallet() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
             <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0f5c)", border: "1px solid rgba(236,72,153,0.2)", borderRadius: 18, padding: "26px 28px" }}>
               <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 8 }}>Available Balance</div>
-              <div style={{ color: "#fff", fontSize: 36, fontWeight: 800, letterSpacing: "-1px" }}>${(wallet.balance || 0).toLocaleString()}</div>
-              <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 6 }}>USD</div>
+              <div style={{ color: "#fff", fontSize: 36, fontWeight: 800, letterSpacing: "-1px" }}>{(wallet.balance || 0).toLocaleString()} FCFA</div>
+              <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 6 }}>XAF</div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, padding: "26px 28px" }}>
               <div style={{ color: "#555", fontSize: 13, marginBottom: 8 }}>Total Contributed</div>
               <div style={{ color: "#EC4899", fontSize: 36, fontWeight: 800, letterSpacing: "-1px" }}>
-                ${wallet.transactions?.filter(t => t.type === "debit").reduce((s, t) => s + (t.amount || 0), 0).toLocaleString() || "0"}
+                {(wallet.transactions?.filter(t => t.type === "debit").reduce((s, t) => s + (t.amount || 0), 0) || 0).toLocaleString()} FCFA
               </div>
               <div style={{ color: "#444", fontSize: 12, marginTop: 6 }}>Lifetime giving</div>
             </div>
@@ -220,7 +220,7 @@ export function BackerWallet() {
                     </div>
                   </div>
                   <div style={{ color: isCredit ? "#10B981" : "#EC4899", fontSize: 15, fontWeight: 700 }}>
-                    {isCredit ? "+" : "-"}${tx.amount?.toLocaleString()}
+                    {isCredit ? "+" : "-"}{tx.amount?.toLocaleString()} FCFA
                   </div>
                 </div>
               );
@@ -246,7 +246,7 @@ export function BackerProfile() {
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
   useEffect(() => {
-    api.get("/profile/me").then(r => {
+    getMyProfile().then(r => {
       const p = r.data.user || r.data;
       setProfile(p);
       setForm({ bio: p.bio || "" });
@@ -258,7 +258,7 @@ export function BackerProfile() {
     try {
       const fd = new FormData();
       if (form.bio) fd.append("bio", form.bio);
-      await api.put("/profile/Createprofile", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      await updateProfile(fd);
       showToast("Profile updated successfully");
     } catch (e) { showToast(e.response?.data?.message || "Failed to update", "error"); }
     finally { setSaving(false); }
@@ -327,7 +327,7 @@ export function BackerProfile() {
                 const fd = new FormData();
                 fd.append("profileImage", file);
                 try {
-                  await api.put("/profile/Createprofile", fd, { headers: { "Content-Type": "multipart/form-data" } });
+                  await updateProfile(fd);
                   showToast("Photo updated");
                   window.location.reload();
                 } catch { showToast("Failed to upload photo", "error"); }

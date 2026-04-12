@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { MessageSquare } from "lucide-react";
 import { getMyRequests, sendCounterOffer, getMessages, sendMessage } from "../../api/investor";
 
 const STATUS_STYLE = {
@@ -44,7 +45,7 @@ export default function InvestorRequests() {
   useEffect(() => {
     if (!selected) return;
     getMessages(selected._id)
-      .then(r => setMessages(r.data.messages || r.data || []))
+      .then(r => setMessages(r.data.negotiationHistory || []))
       .catch(() => setMessages([]));
   }, [selected]);
 
@@ -62,7 +63,7 @@ export default function InvestorRequests() {
         message: counter.message,
       });
       const r = await getMessages(selected._id);
-      setMessages(r.data.messages || r.data || []);
+      setMessages(r.data.negotiationHistory || []);
       setCounter({ amount: "", equity: "", message: "" });
       showToast("Counter offer sent");
     } catch (e) { showToast(e.response?.data?.message || "Failed", "error"); }
@@ -75,9 +76,9 @@ export default function InvestorRequests() {
     try {
       await sendMessage(selected._id, chatMsg);
       const r = await getMessages(selected._id);
-      setMessages(r.data.messages || r.data || []);
+      setMessages(r.data.negotiationHistory || []);
       setChatMsg("");
-    } catch (e) { showToast("Failed to send", "error"); }
+    } catch { showToast("Failed to send", "error"); }
     finally { setSending(false); }
   };
 
@@ -116,7 +117,7 @@ export default function InvestorRequests() {
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#1E0B4B", flex: 1, marginRight: 8 }}>{r.project?.title || "Project"}</div>
                 <StatusBadge status={getDisplayStatus(r)} />
               </div>
-              <div style={{ fontSize: 12, color: "#7B7496" }}>${r.amount?.toLocaleString()} · {r.equityRequested}% equity</div>
+              <div style={{ fontSize: 12, color: "#7B7496" }}>{r.amount?.toLocaleString()} FCFA · {r.equityRequested}% equity</div>
               <div style={{ fontSize: 11, color: "#A09BBF", marginTop: 4 }}>{new Date(r.createdAt).toLocaleDateString()}</div>
             </div>
           ))}
@@ -126,7 +127,7 @@ export default function InvestorRequests() {
         {!selected ? (
           <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #EDE9FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ textAlign: "center", color: "#A09BBF" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
+              <MessageSquare size={44} color="#DDD6FE" style={{ display: "block", margin: "0 auto 12px" }} />
               <div style={{ fontSize: 15, fontWeight: 600, color: "#1E0B4B", marginBottom: 4 }}>Select a request</div>
               <div style={{ fontSize: 13 }}>View details and negotiate terms</div>
             </div>
@@ -144,7 +145,7 @@ export default function InvestorRequests() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginTop: 14 }}>
                 {[
-                  { label: "Your Offer", value: `$${(selected.currentTerms?.amount || selected.amount)?.toLocaleString()}` },
+                  { label: "Your Offer", value: `${(selected.currentTerms?.amount || selected.amount)?.toLocaleString()} FCFA` },
                   { label: "Equity Requested", value: `${selected.currentTerms?.equity || selected.equityRequested}%` },
                   { label: "Admin Status", value: selected.adminStatus },
                 ].map(t => (
@@ -165,7 +166,7 @@ export default function InvestorRequests() {
                 return (
                   <div key={i} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 10 }}>
                     <div style={{ maxWidth: "72%", background: isMe ? "linear-gradient(135deg,#7C6FFF,#9B89FF)" : "#F3F0FF", color: isMe ? "#fff" : "#1E0B4B", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13 }}>
-                      {m.type === "counter" && <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Counter Offer: ${m.amount?.toLocaleString()} · {m.equity}%</div>}
+                      {m.type === "counter" && <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Counter Offer: {m.amount?.toLocaleString()} FCFA · {m.equity}%</div>}
                       {m.message}
                     </div>
                   </div>

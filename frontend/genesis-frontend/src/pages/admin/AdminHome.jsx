@@ -18,11 +18,15 @@ export default function AdminHome() {
       getInvestmentRequests(),
       getAllEscrows(),
     ]).then(([u,p,i,e]) => {
+      // getPendingUsers returns an array directly, not { users: [...] }
+      // getPendingProjects returns { count, projects }
+      // getPendingInvestmentRequests returns { count, requests }
+      // adminGetAllEscrows returns { count, escrows }
       setData({
-        users:       u.status==="fulfilled" ? (u.value.data?.users||u.value.data||[]) : [],
-        projects:    p.status==="fulfilled" ? (p.value.data?.projects||p.value.data||[]) : [],
-        investments: i.status==="fulfilled" ? (i.value.data?.requests||i.value.data||[]) : [],
-        escrows:     e.status==="fulfilled" ? (e.value.data?.escrows||e.value.data||[]) : [],
+        users:       u.status==="fulfilled" ? (Array.isArray(u.value.data) ? u.value.data : (u.value.data?.users || [])) : [],
+        projects:    p.status==="fulfilled" ? (p.value.data?.projects || p.value.data?.projects || []) : [],
+        investments: i.status==="fulfilled" ? (i.value.data?.requests || []) : [],
+        escrows:     e.status==="fulfilled" ? (e.value.data?.escrows || []) : [],
       });
     }).finally(() => setLoading(false));
   }, []);
@@ -137,7 +141,7 @@ export default function AdminHome() {
               </div>
               <div style={{ flex:1,minWidth:0 }}>
                 <div style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:600,color:"#0D0621",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.title}</div>
-                <div style={{ fontFamily:F.dm,fontSize:11,color:"rgba(13,6,33,0.4)" }}>{p.category} · ${(p.targetAmount||0).toLocaleString()}</div>
+                <div style={{ fontFamily:F.dm,fontSize:11,color:"rgba(13,6,33,0.4)" }}>{p.category} · {(p.targetAmount||0).toLocaleString()} FCFA</div>
               </div>
               <span style={{ padding:"2px 8px",borderRadius:100,background:"#DBEAFE",color:"#2563EB",fontFamily:F.jakarta,fontSize:10,fontWeight:700,flexShrink:0 }}>Review</span>
             </div>
@@ -165,7 +169,7 @@ export default function AdminHome() {
               const statusColor = e.status==="released" ? {bg:"#D1FAE5",c:"#059669"} : e.status==="validated" ? {bg:"#DBEAFE",c:"#2563EB"} : {bg:"#FEF3C7",c:"#D97706"};
               return [
                 <div key={`id-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)",fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.5)" }}>{(e._id||"").slice(-8)}…</div>,
-                <div key={`amt-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)",fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#0D0621" }}>${(e.amount||0).toLocaleString()}</div>,
+                <div key={`amt-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)",fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#0D0621" }}>{(e.amount||0).toLocaleString()} FCFA</div>,
                 <div key={`st-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)" }}><span style={{ padding:"3px 10px",borderRadius:100,background:statusColor.bg,color:statusColor.c,fontFamily:F.jakarta,fontSize:11,fontWeight:700 }}>{e.status}</span></div>,
                 <div key={`cs-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)",display:"flex",alignItems:"center" }}>{e.agreement?.creatorSigned ? <CheckCircle size={16} color="#059669" /> : <Clock size={16} color="#D97706" />}</div>,
                 <div key={`is-${i}`} style={{ padding:"12px 20px",borderBottom:"1px solid rgba(0,0,0,0.04)",display:"flex",alignItems:"center" }}>{e.agreement?.investorSigned ? <CheckCircle size={16} color="#059669" /> : <Clock size={16} color="#D97706" />}</div>,

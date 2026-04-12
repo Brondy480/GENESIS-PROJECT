@@ -45,7 +45,7 @@ function EscrowCard({ escrow, onDownload, onUpload }) {
         <div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "#1E0B4B" }}>{escrow.project?.title || "Project"}</div>
           <div style={{ fontSize: 13, color: "#7B7496", marginTop: 3 }}>
-            ${escrow.amount?.toLocaleString()} · Escrow ID: {escrow._id?.slice(-8)}
+            {escrow.amount?.toLocaleString()} FCFA · Escrow ID: {escrow._id?.slice(-8)}
           </div>
         </div>
         <span style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20, background: st.bg, color: st.color }}>{st.label}</span>
@@ -140,13 +140,8 @@ export default function InvestorAgreements() {
 
   const fetchEscrows = async () => {
     try {
-      const r = await api.get("/payment");
-      const deals = r.data.deals || r.data || [];
-      const escrowData = await Promise.allSettled(
-        deals.filter(d => d.escrow).map(d => api.get(`/agreements/${d.escrow}/status`))
-      );
-      const valid = escrowData.filter(r => r.status === "fulfilled").map(r => r.value.data);
-      setEscrows(valid);
+      const r = await api.get("/agreements/my-escrows");
+      setEscrows(r.data.escrows || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -155,10 +150,19 @@ export default function InvestorAgreements() {
 
   const handleDownload = async (escrowId) => {
     try {
-      const r = await api.get(`/agreements/${escrowId}/download`);
-      const url = r.data.documentUrl;
-      if (url) window.open(url, "_blank");
-    } catch (e) { showToast("Could not retrieve agreement", "error"); }
+      const response = await api.get(`/agreements/${escrowId}/view-agreement`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `agreement-${escrowId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+      showToast("Failed to download agreement. Please try again.", "error");
+    }
   };
 
   const handleUpload = async (escrowId, formData) => {
@@ -194,7 +198,7 @@ export default function InvestorAgreements() {
           <div style={{ fontSize: 14, color: "#A09BBF" }}>Agreements appear after you complete a deal payment</div>
         </div>
       ) : escrows.map(e => (
-        <EscrowCard key={e.escrowId} escrow={{ _id: e.escrowId, ...e }} onDownload={handleDownload} onUpload={handleUpload} />
+        <EscrowCard key={e._id} escrow={e} onDownload={handleDownload} onUpload={handleUpload} />
       ))}
     </div>
   );

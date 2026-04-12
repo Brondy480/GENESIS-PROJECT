@@ -10,9 +10,9 @@ import vid5 from "../assets/Vueaeriene.mp4";
 const VIDEOS = [vid1, vid2, vid3, vid4, vid5];
 
 const PROJECTS = [
-  { id:1, title:"SolarGrid Africa",   cat:"Energy",     loc:"Lagos, NG",   raised:480, goal:500, equity:"12%", val:"$4M",  days:8,  hot:true,  img:"https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=600&h=400&fit=crop&q=80" },
-  { id:2, title:"AgriChain Platform", cat:"AgriTech",   loc:"Nairobi, KE", raised:210, goal:400, equity:"18%", val:"$2.2M",days:24, hot:false, img:"https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=400&fit=crop&q=80" },
-  { id:3, title:"MediConnect",        cat:"HealthTech", loc:"Accra, GH",   raised:150, goal:300, equity:"15%", val:"$2M",  days:31, hot:false, img:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop&q=80" },
+  { id:1, title:"SolarGrid Africa",   cat:"Energy",     loc:"Lagos, NG",   raised:480, goal:500, equity:"12%", val:"2.4B FCFA",  days:8,  hot:true,  img:"https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=600&h=400&fit=crop&q=80" },
+  { id:2, title:"AgriChain Platform", cat:"AgriTech",   loc:"Nairobi, KE", raised:210, goal:400, equity:"18%", val:"1.3B FCFA",days:24, hot:false, img:"https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=400&fit=crop&q=80" },
+  { id:3, title:"MediConnect",        cat:"HealthTech", loc:"Accra, GH",   raised:150, goal:300, equity:"15%", val:"1.2B FCFA",  days:31, hot:false, img:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop&q=80" },
 ];
 
 const TABS = [
@@ -109,7 +109,7 @@ function HeroCarousel() {
         <div style={{ width:38, height:38, background:"#EDE9FE", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🔐</div>
         <div>
           <div style={{ fontSize:12, fontWeight:700, color:"#7C3AED", fontFamily:"var(--font-jakarta)", marginBottom:2 }}>Escrow Active</div>
-          <div style={{ fontSize:11, color:"rgba(13,6,33,0.4)", fontFamily:"var(--font-dm)" }}>$10,000 secured</div>
+          <div style={{ fontSize:11, color:"rgba(13,6,33,0.4)", fontFamily:"var(--font-dm)" }}>6,000,000 FCFA secured</div>
         </div>
       </div>
 
@@ -402,7 +402,7 @@ export default function LandingPage() {
 
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:3 }}>
             {[
-              { value:`$${count.m}M+`, label:"Capital Raised",      sub:"Across all projects",  icon:"💰", even:true  },
+              { value:`${count.m}B+ FCFA`, label:"Capital Raised",      sub:"Across all projects",  icon:"💰", even:true  },
               { value:`${count.p}+`,   label:"Active Projects",     sub:"Across 12 countries",  icon:"🚀", even:false },
               { value:`${count.i.toLocaleString()}+`, label:"Registered Investors", sub:"Growing daily", icon:"👥", even:false },
               { value:`${count.c}`,    label:"African Countries",   sub:"And expanding",        icon:"🌍", even:true  },
@@ -455,7 +455,7 @@ export default function LandingPage() {
               </div>
               <div style={{ padding:"24px 28px" }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:18 }}>
-                  {[{v:`$${PROJECTS[0].raised}K`,l:"Raised"},{v:PROJECTS[0].equity,l:"Equity"},{v:PROJECTS[0].val,l:"Valuation"}].map(m=>(
+                  {[{v:`${PROJECTS[0].raised}M FCFA`,l:"Raised"},{v:PROJECTS[0].equity,l:"Equity"},{v:PROJECTS[0].val,l:"Valuation"}].map(m=>(
                     <div key={m.l} style={{ background:"#F5F3FF", borderRadius:14, padding:"14px 16px", textAlign:"center" }}>
                       <div style={{ fontFamily:"var(--font-jakarta)", fontSize:18, fontWeight:800, color:"#7C3AED" }}>{m.v}</div>
                       <div style={{ fontFamily:"var(--font-dm)", fontSize:10, color:"rgba(13,6,33,0.4)", textTransform:"uppercase", letterSpacing:"0.06em", marginTop:2 }}>{m.l}</div>
@@ -511,7 +511,7 @@ export default function LandingPage() {
                     <div style={{ height:"100%", background:"linear-gradient(90deg,#7C3AED,#A78BFF)", borderRadius:100, width:`${Math.round(p.raised/p.goal*100)}%` }} />
                   </div>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontFamily:"var(--font-dm)", fontSize:12, color:"rgba(13,6,33,0.45)" }}>${p.raised}K of ${p.goal}K</span>
+                    <span style={{ fontFamily:"var(--font-dm)", fontSize:12, color:"rgba(13,6,33,0.45)" }}>{p.raised}M of {p.goal}M FCFA</span>
                     <button onClick={e=>{e.stopPropagation();navigate("/register?role=investor");}} style={{ padding:"9px 18px", background:"#7C3AED", color:"white", fontFamily:"var(--font-jakarta)", fontWeight:700, fontSize:12, border:"none", borderRadius:100, cursor:"pointer" }}>
                       Invest →
                     </button>

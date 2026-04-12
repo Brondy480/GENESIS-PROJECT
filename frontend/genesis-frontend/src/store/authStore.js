@@ -15,7 +15,7 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await api.post("/auth/login", { email, password });
+          const res = await api.post("/Auth/login", { email, password });
           const { token, user } = res.data;
           localStorage.setItem("genesis_token", token);
           set({ user, token, isAuthenticated: true, isLoading: false });
@@ -31,7 +31,7 @@ const useAuthStore = create(
       register: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await api.post("/auth/register", data);
+          const res = await api.post("/Auth/registration", data);
           const { token, user } = res.data;
           localStorage.setItem("genesis_token", token);
           set({ user, token, isAuthenticated: true, isLoading: false });

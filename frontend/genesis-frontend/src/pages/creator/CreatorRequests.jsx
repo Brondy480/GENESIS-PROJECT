@@ -1,5 +1,6 @@
 // ── CreatorRequests ──────────────────────────────────────────────────────────
 import { useState, useEffect } from "react";
+import { Inbox, CheckCircle, XCircle } from "lucide-react";
 import { getMyRequests, acceptRequest, rejectInvestment, sendCounterOffer, getMessages, sendMessage } from "../../api/creator";
 
 const F = { jakarta:"'Plus Jakarta Sans',sans-serif", dm:"'DM Sans',sans-serif" };
@@ -34,7 +35,7 @@ export default function CreatorRequests() {
   const sendMsg = async () => {
     if (!newMsg.trim()) return;
     try {
-      await sendMessage(selected._id, { message:newMsg });
+      await sendMessage(selected._id, newMsg);
       setMessages(p=>[...p,{ role:"creator",message:newMsg,createdAt:new Date().toISOString() }]);
       setNewMsg("");
     } catch(e) { alert(e.response?.data?.message||"Failed"); }
@@ -76,7 +77,7 @@ export default function CreatorRequests() {
   const statusBadge = (req) => {
     if (req.adminStatus==="pending") return { label:"Awaiting Admin", bg:"#FEF3C7",color:"#D97706" };
     if (req.adminStatus==="rejected") return { label:"Admin Rejected", bg:"#FEE2E2",color:"#DC2626" };
-    if (req.creatorStatus==="accepted") return { label:"Accepted ✓", bg:"#D1FAE5",color:"#059669" };
+    if (req.creatorStatus==="accepted") return { label:"Accepted", bg:"#D1FAE5",color:"#059669" };
     if (req.creatorStatus==="rejected") return { label:"Rejected", bg:"#FEE2E2",color:"#DC2626" };
     return { label:"Review", bg:"#EDE9FE",color:"#7C3AED" };
   };
@@ -101,7 +102,7 @@ export default function CreatorRequests() {
 
         <div style={{ flex:1,overflowY:"auto" }}>
           {loading ? <div style={{ display:"flex",justifyContent:"center",padding:60 }}><div style={{ width:28,height:28,border:"3px solid rgba(124,58,237,0.2)",borderTopColor:"#7C3AED",borderRadius:"50%",animation:"spin 0.7s linear infinite" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
-          : filtered.length===0 ? <div style={{ padding:"60px 20px",textAlign:"center" }}><div style={{ fontSize:44,marginBottom:12 }}>📥</div><p style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.4)" }}>No requests</p></div>
+          : filtered.length===0 ? <div style={{ padding:"60px 20px",textAlign:"center" }}><div style={{ display:"flex",justifyContent:"center",marginBottom:12 }}><Inbox size={44} color="#DDD6FE" /></div><p style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.4)" }}>No requests</p></div>
           : filtered.map((req,i) => {
             const sb = statusBadge(req);
             return (
@@ -115,7 +116,7 @@ export default function CreatorRequests() {
                       <span style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#0D0621" }}>{req.investor?.name||"Investor"}</span>
                       <span style={{ padding:"2px 8px",borderRadius:100,background:sb.bg,color:sb.color,fontFamily:F.jakarta,fontSize:10,fontWeight:700,flexShrink:0,marginLeft:8 }}>{sb.label}</span>
                     </div>
-                    <span style={{ fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.5)" }}>${(req.currentTerms?.amount||req.amount||0).toLocaleString()} for {req.currentTerms?.equity||req.equityRequested}% equity</span>
+                    <span style={{ fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.5)" }}>{(req.currentTerms?.amount||req.amount||0).toLocaleString()} FCFA for {req.currentTerms?.equity||req.equityRequested}% equity</span>
                   </div>
                 </div>
               </div>
@@ -137,7 +138,7 @@ export default function CreatorRequests() {
 
           {/* Terms */}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,padding:"12px 18px",background:"#FAFAFF",borderBottom:"1px solid rgba(124,58,237,0.07)",flexShrink:0 }}>
-            {[{l:"Amount",v:`$${(selected.currentTerms?.amount||selected.amount||0).toLocaleString()}`},{l:"Equity",v:`${selected.currentTerms?.equity||selected.equityRequested}%`},{l:"Status",v:selected.negotiationStatus||"open"}].map(m=>(
+            {[{l:"Amount",v:`${(selected.currentTerms?.amount||selected.amount||0).toLocaleString()} FCFA`},{l:"Equity",v:`${selected.currentTerms?.equity||selected.equityRequested}%`},{l:"Status",v:selected.negotiationStatus||"open"}].map(m=>(
               <div key={m.l} style={{ background:"white",borderRadius:10,padding:"10px",textAlign:"center",border:"1px solid rgba(124,58,237,0.08)" }}>
                 <div style={{ fontFamily:F.jakarta,fontSize:14,fontWeight:800,color:"#7C3AED" }}>{m.v}</div>
                 <div style={{ fontFamily:F.dm,fontSize:9,color:"rgba(13,6,33,0.4)",textTransform:"uppercase",marginTop:2 }}>{m.l}</div>
@@ -149,7 +150,7 @@ export default function CreatorRequests() {
           <div style={{ display:"flex",borderBottom:"1px solid rgba(124,58,237,0.07)",flexShrink:0 }}>
             {["chat","counter"].map(t=>(
               <button key={t} onClick={()=>setTab(t)} style={{ flex:1,padding:"11px",border:"none",cursor:"pointer",fontFamily:F.jakarta,fontSize:12,fontWeight:700,background:"transparent",color:tab===t?"#7C3AED":"rgba(13,6,33,0.4)",borderBottom:tab===t?"2px solid #7C3AED":"2px solid transparent",transition:"all 0.2s" }}>
-                {t==="chat"?"💬 Negotiation":"🔄 Counter Offer"}
+                {t==="chat"?"Negotiation":"Counter Offer"}
               </button>
             ))}
           </div>
@@ -165,7 +166,7 @@ export default function CreatorRequests() {
                   return (
                     <div key={i} style={{ display:"flex",justifyContent:isMe?"flex-end":"flex-start" }}>
                       <div style={{ maxWidth:"75%",borderRadius:16,padding:"10px 14px",background:isMe?"#7C3AED":"#F5F3FF",borderBottomRightRadius:isMe?4:16,borderBottomLeftRadius:isMe?16:4 }}>
-                        {msg.isCounter && <div style={{ fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:100,background:isMe?"rgba(255,255,255,0.2)":"#EDE9FE",color:isMe?"white":"#7C3AED",marginBottom:6,display:"inline-block",fontFamily:F.jakarta }}>Counter: ${Number(msg.amount).toLocaleString()} / {msg.equity}%</div>}
+                        {msg.isCounter && <div style={{ fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:100,background:isMe?"rgba(255,255,255,0.2)":"#EDE9FE",color:isMe?"white":"#7C3AED",marginBottom:6,display:"inline-block",fontFamily:F.jakarta }}>Counter: {Number(msg.amount).toLocaleString()} FCFA / {msg.equity}%</div>}
                         <p style={{ fontFamily:F.dm,fontSize:13,color:isMe?"white":"#0D0621",margin:0,lineHeight:1.5 }}>{msg.message}</p>
                         <p style={{ fontFamily:F.dm,fontSize:10,color:isMe?"rgba(255,255,255,0.5)":"rgba(13,6,33,0.35)",margin:"4px 0 0",textAlign:"right" }}>{new Date(msg.createdAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</p>
                       </div>
@@ -195,7 +196,7 @@ export default function CreatorRequests() {
                 <textarea value={counter.message} onChange={e=>setCounter({...counter,message:e.target.value})} placeholder="Explain your counter offer..." rows={3} style={{ ...inp,resize:"vertical" }} />
               </div>
               <button onClick={sendCounter} disabled={actionLoading==="counter"} style={{ padding:13,borderRadius:12,background:"linear-gradient(135deg,#7C3AED,#6D28D9)",border:"none",color:"white",fontFamily:F.jakarta,fontWeight:700,fontSize:14,cursor:"pointer",opacity:actionLoading==="counter"?0.7:1 }}>
-                {actionLoading==="counter"?"Sending...":"🔄 Send Counter Offer"}
+                {actionLoading==="counter"?"Sending...":"Send Counter Offer"}
               </button>
             </div>
           )}
@@ -203,11 +204,11 @@ export default function CreatorRequests() {
           {/* Accept/Reject */}
           {selected.creatorStatus==="pending" && selected.adminStatus==="approved" && (
             <div style={{ display:"flex",gap:10,padding:"12px 14px",borderTop:"1px solid rgba(124,58,237,0.07)",flexShrink:0 }}>
-              <button onClick={()=>accept(selected._id)} disabled={!!actionLoading} style={{ flex:1,padding:12,borderRadius:12,background:"#D1FAE5",border:"none",color:"#059669",fontFamily:F.jakarta,fontWeight:700,fontSize:13,cursor:"pointer",opacity:!!actionLoading?0.6:1 }}>
-                {actionLoading==="accept"?"Accepting...":"✅ Accept Deal"}
+              <button onClick={()=>accept(selected._id)} disabled={!!actionLoading} style={{ flex:1,padding:12,borderRadius:12,background:"#D1FAE5",border:"none",color:"#059669",fontFamily:F.jakarta,fontWeight:700,fontSize:13,cursor:"pointer",opacity:actionLoading?0.6:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6 }}>
+                {actionLoading==="accept"?"Accepting...":<><CheckCircle size={15} />Accept Deal</>}
               </button>
-              <button onClick={()=>reject(selected._id)} disabled={!!actionLoading} style={{ flex:1,padding:12,borderRadius:12,background:"#FEE2E2",border:"none",color:"#DC2626",fontFamily:F.jakarta,fontWeight:700,fontSize:13,cursor:"pointer",opacity:!!actionLoading?0.6:1 }}>
-                {actionLoading==="reject"?"Rejecting...":"❌ Reject"}
+              <button onClick={()=>reject(selected._id)} disabled={!!actionLoading} style={{ flex:1,padding:12,borderRadius:12,background:"#FEE2E2",border:"none",color:"#DC2626",fontFamily:F.jakarta,fontWeight:700,fontSize:13,cursor:"pointer",opacity:actionLoading?0.6:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6 }}>
+                {actionLoading==="reject"?"Rejecting...":<><XCircle size={15} />Reject</>}
               </button>
             </div>
           )}

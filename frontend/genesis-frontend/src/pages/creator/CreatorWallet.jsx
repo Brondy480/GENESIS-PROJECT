@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DollarSign, Lock, CreditCard } from "lucide-react";
 import { getMyWallet } from "../../api/creator";
 
 const F = { jakarta:"'Plus Jakarta Sans',sans-serif", dm:"'DM Sans',sans-serif" };
@@ -25,11 +26,11 @@ export default function CreatorWallet() {
           <div style={{ position:"absolute",inset:0,backgroundImage:"radial-gradient(rgba(255,255,255,0.06) 1.5px,transparent 1.5px)",backgroundSize:"28px 28px",pointerEvents:"none" }} />
           <div style={{ position:"relative",zIndex:1 }}>
             <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
-              <div style={{ width:40,height:40,background:"rgba(255,255,255,0.15)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20 }}>💰</div>
+              <div style={{ width:40,height:40,background:"rgba(255,255,255,0.15)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center" }}><DollarSign size={22} color="white" /></div>
               <span style={{ fontFamily:F.dm,fontSize:13,color:"rgba(255,255,255,0.6)" }}>Available Balance</span>
             </div>
             <div style={{ fontFamily:F.jakarta,fontSize:38,fontWeight:800,color:"white",letterSpacing:"-0.02em",marginBottom:6 }}>
-              ${loading?"—":(wallet?.balance||0).toLocaleString()}
+              {loading?"—":(wallet?.balance||0).toLocaleString()} FCFA
             </div>
             <div style={{ fontFamily:F.dm,fontSize:12,color:"rgba(255,255,255,0.4)" }}>Ready for withdrawal</div>
           </div>
@@ -38,11 +39,11 @@ export default function CreatorWallet() {
         {/* Escrow */}
         <div style={{ background:"white",borderRadius:24,padding:"28px 28px",boxShadow:"0 2px 16px rgba(124,58,237,0.06)" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
-            <div style={{ width:40,height:40,background:"#EDE9FE",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20 }}>🔐</div>
+            <div style={{ width:40,height:40,background:"#EDE9FE",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center" }}><Lock size={22} color="#7C3AED" /></div>
             <span style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.5)" }}>Escrow Balance</span>
           </div>
           <div style={{ fontFamily:F.jakarta,fontSize:38,fontWeight:800,color:"#7C3AED",letterSpacing:"-0.02em",marginBottom:6 }}>
-            ${loading?"—":(wallet?.escrowBalance||0).toLocaleString()}
+            {loading?"—":(wallet?.escrowBalance||0).toLocaleString()} FCFA
           </div>
           <div style={{ fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.4)" }}>Held in active escrows</div>
         </div>
@@ -58,7 +59,7 @@ export default function CreatorWallet() {
         {loading ? <div style={{ display:"flex",justifyContent:"center",padding:60 }}><div style={{ width:28,height:28,border:"3px solid rgba(124,58,237,0.2)",borderTopColor:"#7C3AED",borderRadius:"50%",animation:"spin 0.7s linear infinite" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
         : !wallet?.transactions?.length ? (
           <div style={{ padding:"60px 20px",textAlign:"center" }}>
-            <div style={{ fontSize:48,marginBottom:12 }}>💳</div>
+            <div style={{ display:"flex",justifyContent:"center",marginBottom:12 }}><CreditCard size={48} color="#C4B5FD" strokeWidth={1.5} /></div>
             <div style={{ fontFamily:F.jakarta,fontSize:14,fontWeight:700,color:"#0D0621",marginBottom:6 }}>No transactions yet</div>
             <div style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.4)" }}>Transactions appear after escrow is released</div>
           </div>
@@ -77,7 +78,7 @@ export default function CreatorWallet() {
             </div>
             <span style={{ padding:"3px 10px",borderRadius:100,background:t.type==="credit"?"#D1FAE5":"#FEE2E2",color:t.type==="credit"?"#059669":"#DC2626",fontFamily:F.jakarta,fontSize:10,fontWeight:700 }}>{t.type}</span>
             <span style={{ fontFamily:F.jakarta,fontSize:15,fontWeight:800,color:t.type==="credit"?"#059669":"#DC2626" }}>
-              {t.type==="credit"?"+":"−"}${(t.amount||0).toLocaleString()}
+              {t.type==="credit"?"+":"−"}{(t.amount||0).toLocaleString()} FCFA
             </span>
           </div>
         ))}

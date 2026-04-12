@@ -13,6 +13,7 @@ export const getPendingProjects = ()     => api.get("/admin/Projects/GetPendingP
 export const approveProject     = (id)   => api.patch(`/admin/Projects/approuve/${id}`);
 export const rejectProject      = (id)   => api.patch(`/admin/Projects/reject/${id}`);
 export const suspendProject     = (id)   => api.patch(`/admin/Projects/suspend/${id}`);
+export const deleteProject      = (id)   => api.delete(`/admin/Projects/${id}`);
 export const getAllProjects      = ()     => api.get("/publicProject");
 
 // ── INVESTMENT REQUESTS ──

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { AlertCircle, Image as ImageIcon, FolderOpen, FileText } from "lucide-react";
 import { getPublicProjects, createProject } from "../../api/creator";
 import useAuthStore from "../../store/authStore";
 
@@ -20,7 +21,8 @@ export default function CreatorProjects() {
   const fileRef = useRef();
   const [preview, setPreview] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
-  const [form, setForm] = useState({ title:"",description:"",category:"technology",targetAmount:"",deadline:"",valuation:"",equityAvailable:"",allowInvestment:true,allowFunding:true,tags:"" });
+  const [files, setFiles] = useState({ businessPlan: null });
+  const [form, setForm] = useState({ title:"",description:"",category:"technology",targetAmount:"",deadline:"",valuation:"",equityAvailable:"",allowInvestment:true,allowFunding:true,tags:"",demoVideoUrl:"" });
 
   useEffect(() => { fetchProjects(); }, []);
 
@@ -45,10 +47,11 @@ export default function CreatorProjects() {
       const fd = new FormData();
       Object.entries(form).forEach(([k,v]) => fd.append(k,v));
       fd.append("coverImage", coverFile);
+      if (files.businessPlan) fd.append("businessPlan", files.businessPlan);
       await createProject(fd);
       setShowForm(false);
-      setForm({ title:"",description:"",category:"technology",targetAmount:"",deadline:"",valuation:"",equityAvailable:"",allowInvestment:true,allowFunding:true,tags:"" });
-      setCoverFile(null); setPreview(null);
+      setForm({ title:"",description:"",category:"technology",targetAmount:"",deadline:"",valuation:"",equityAvailable:"",allowInvestment:true,allowFunding:true,tags:"",demoVideoUrl:"" });
+      setCoverFile(null); setPreview(null); setFiles({ businessPlan: null });
       fetchProjects();
     } catch (err) { setError(err.response?.data?.message||"Failed to create project"); }
     finally { setSubmitting(false); }
@@ -82,7 +85,7 @@ export default function CreatorProjects() {
               <button onClick={()=>setShowForm(false)} style={{ width:32,height:32,borderRadius:9,background:"#F5F3FF",border:"none",cursor:"pointer",fontSize:16 }}>✕</button>
             </div>
             <form onSubmit={handleSubmit} style={{ padding:24, display:"flex",flexDirection:"column",gap:16 }}>
-              {error && <div style={{ background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:12,padding:"10px 14px",color:"#DC2626",fontFamily:F.dm,fontSize:14 }}>⚠️ {error}</div>}
+              {error && <div style={{ background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:12,padding:"10px 14px",color:"#DC2626",fontFamily:F.dm,fontSize:14,display:"flex",alignItems:"center",gap:8 }}><AlertCircle size={16} />{error}</div>}
 
               {[
                 { label:"Project Title *", key:"title", placeholder:"e.g. SolarGrid Africa", type:"text", required:true },
@@ -146,9 +149,33 @@ export default function CreatorProjects() {
                   onMouseEnter={e=>{e.currentTarget.style.borderColor="#7C3AED";e.currentTarget.style.background="#F5F3FF";}}
                   onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(124,58,237,0.25)";e.currentTarget.style.background="#FAFAFF";}}>
                   {preview ? <img src={preview} style={{ maxHeight:120,borderRadius:10,objectFit:"cover" }} alt="preview" />
-                  : <><div style={{ fontSize:32,marginBottom:8 }}>🖼️</div><p style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.5)",margin:0 }}>Click to upload cover image</p></>}
+                  : <><div style={{ display:"flex",justifyContent:"center",marginBottom:8 }}><ImageIcon size={32} color="#A78BFF" /></div><p style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.5)",margin:0 }}>Click to upload cover image</p></>}
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }} onChange={handleFile} />
+              </div>
+
+              {/* Demo Video URL */}
+              <div>
+                <label style={{ fontFamily:F.jakarta,fontSize:12,fontWeight:700,color:"#0D0621",display:"block",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em" }}>Demo Video URL (YouTube)</label>
+                <input
+                  value={form.demoVideoUrl}
+                  onChange={e => setForm({...form, demoVideoUrl: e.target.value})}
+                  placeholder="https://youtube.com/watch?v=..."
+                  style={inp(false)}
+                />
+                <p style={{ fontSize:11,color:"rgba(13,6,33,0.4)",marginTop:4,fontFamily:F.dm,margin:"4px 0 0" }}>Paste a YouTube link so investors can watch your pitch</p>
+              </div>
+
+              {/* Business Plan PDF */}
+              <div>
+                <label style={{ fontFamily:F.jakarta,fontSize:12,fontWeight:700,color:"#0D0621",display:"block",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em" }}>Business Plan (PDF)</label>
+                <input type="file" accept=".pdf" id="businessPlanInput" onChange={e => setFiles({...files, businessPlan: e.target.files[0]})} style={{ display:"none" }} />
+                <label htmlFor="businessPlanInput" style={{ display:"flex",alignItems:"center",gap:10,padding:"12px 16px",borderRadius:12,border:"1.5px dashed rgba(124,58,237,0.3)",cursor:"pointer",background:"#FAFAFF" }}>
+                  <FileText size={18} color="#7C3AED" />
+                  <span style={{ fontFamily:F.dm,fontSize:13,color:"rgba(13,6,33,0.5)" }}>
+                    {files.businessPlan ? files.businessPlan.name : "Click to upload business plan PDF"}
+                  </span>
+                </label>
               </div>
 
               <div style={{ display:"flex",gap:10,paddingTop:4,borderTop:"1px solid rgba(124,58,237,0.08)",marginTop:4 }}>
@@ -166,7 +193,7 @@ export default function CreatorProjects() {
       {loading ? <div style={{ display:"flex",justifyContent:"center",padding:80 }}><div style={{ width:32,height:32,border:"3px solid rgba(124,58,237,0.2)",borderTopColor:"#7C3AED",borderRadius:"50%",animation:"spin 0.7s linear infinite" }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
       : projects.length===0 ? (
         <div style={{ background:"white",borderRadius:24,padding:"80px 40px",textAlign:"center",boxShadow:"0 2px 16px rgba(124,58,237,0.06)" }}>
-          <div style={{ fontSize:56,marginBottom:16 }}>🚀</div>
+          <div style={{ display:"flex",justifyContent:"center",marginBottom:16 }}><FolderOpen size={56} color="#C4B5FD" strokeWidth={1.5} /></div>
           <h3 style={{ fontFamily:F.jakarta,fontSize:20,fontWeight:800,color:"#0D0621",marginBottom:8 }}>No projects yet</h3>
           <p style={{ fontFamily:F.dm,fontSize:14,color:"rgba(13,6,33,0.45)",marginBottom:24 }}>Create your first project to start raising capital</p>
           <button onClick={()=>setShowForm(true)} style={{ padding:"12px 24px",borderRadius:14,background:"linear-gradient(135deg,#7C3AED,#6D28D9)",border:"none",color:"white",fontFamily:F.jakarta,fontWeight:700,fontSize:14,cursor:"pointer" }}>+ Create Your First Project</button>
@@ -191,7 +218,7 @@ export default function CreatorProjects() {
                   <h3 style={{ fontFamily:F.jakarta,fontSize:15,fontWeight:700,color:"#0D0621",marginBottom:6 }}>{p.title}</h3>
                   <p style={{ fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.5)",marginBottom:14,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden" }}>{p.description}</p>
                   <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12 }}>
-                    {[{l:"Raised",v:`$${(p.totalFunded||0).toLocaleString()}`},{l:"Target",v:`$${(p.targetAmount||0).toLocaleString()}`},{l:"Equity",v:`${p.equityAvailable||0}%`}].map(m=>(
+                    {[{l:"Raised",v:`${(p.totalFunded||0).toLocaleString()} FCFA`},{l:"Target",v:`${(p.targetAmount||0).toLocaleString()} FCFA`},{l:"Equity",v:`${p.equityAvailable||0}%`}].map(m=>(
                       <div key={m.l} style={{ background:"#F5F3FF",borderRadius:10,padding:"8px",textAlign:"center" }}>
                         <div style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:800,color:"#7C3AED" }}>{m.v}</div>
                         <div style={{ fontFamily:F.dm,fontSize:9,color:"rgba(13,6,33,0.4)",textTransform:"uppercase",marginTop:1 }}>{m.l}</div>

@@ -76,7 +76,7 @@ export function AdminInvestments() {
                   <span style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:600,color:"#0D0621" }}>{req.investor?.name||"Investor"}</span>
                 </div>
                 <span style={{ fontFamily:F.dm,fontSize:12,color:"rgba(13,6,33,0.6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingRight:8 }}>{req.project?.title||"Project"}</span>
-                <span style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#0D0621" }}>${(req.amount||0).toLocaleString()}</span>
+                <span style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#0D0621" }}>{(req.amount||0).toLocaleString()} FCFA</span>
                 <span style={{ fontFamily:F.jakarta,fontSize:13,fontWeight:700,color:"#7C3AED" }}>{req.equityRequested}%</span>
                 <span style={{ padding:"3px 10px",borderRadius:100,background:ss.bg,color:ss.c,fontFamily:F.jakarta,fontSize:11,fontWeight:700,width:"fit-content" }}>{req.adminStatus}</span>
                 <div style={{ display:"flex",gap:6 }}>
@@ -105,7 +105,7 @@ export function AdminInvestments() {
             </div>
             <div style={{ padding:22 }}>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18 }}>
-                {[{l:"Investor",v:selected.investor?.name||"—"},{l:"Project",v:selected.project?.title||"—"},{l:"Amount",v:`$${(selected.amount||0).toLocaleString()}`},{l:"Equity",v:`${selected.equityRequested}%`},{l:"Admin Status",v:selected.adminStatus||"—"},{l:"Creator Status",v:selected.creatorStatus||"—"}].map(m=>(
+                {[{l:"Investor",v:selected.investor?.name||"—"},{l:"Project",v:selected.project?.title||"—"},{l:"Amount",v:`${(selected.amount||0).toLocaleString()} FCFA`},{l:"Equity",v:`${selected.equityRequested}%`},{l:"Admin Status",v:selected.adminStatus||"—"},{l:"Creator Status",v:selected.creatorStatus||"—"}].map(m=>(
                   <div key={m.l} style={{ background:"#F5F3FF",borderRadius:12,padding:"12px 14px" }}>
                     <div style={{ fontFamily:F.dm,fontSize:10,color:"rgba(13,6,33,0.4)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4 }}>{m.l}</div>
                     <div style={{ fontFamily:F.jakarta,fontSize:14,fontWeight:600,color:"#0D0621" }}>{m.v}</div>

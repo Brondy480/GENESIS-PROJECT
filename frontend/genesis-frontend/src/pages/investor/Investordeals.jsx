@@ -92,7 +92,7 @@ export default function InvestorDeals() {
                   <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontSize: 11, color: "#A09BBF" }}>Amount</div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: "#1E0B4B" }}>${deal.amount?.toLocaleString()}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: "#1E0B4B" }}>{deal.amount?.toLocaleString()} FCFA</div>
                     </div>
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontSize: 11, color: "#A09BBF" }}>Equity</div>
@@ -140,7 +140,7 @@ export default function InvestorDeals() {
             <div style={{ background: "#F8F7FF", borderRadius: 14, padding: 20, marginBottom: 20 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: "#1E0B4B", marginBottom: 16 }}>{selectedDeal.project?.title}</div>
               {[
-                ["Investment Amount", `$${selectedDeal.amount?.toLocaleString()}`],
+                ["Investment Amount", `${selectedDeal.amount?.toLocaleString()} FCFA`],
                 ["Equity", `${selectedDeal.equity}%`],
                 ["Status", STATUS_STYLES[selectedDeal.dealStatus]?.label || selectedDeal.dealStatus],
                 ["Platform Fee", `${selectedDeal.platformFeePercent || 5}%`],
@@ -166,7 +166,7 @@ export default function InvestorDeals() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, background: "#F0EEFF", borderRadius: 12, padding: 16, marginBottom: 20 }}>
                   <div>
                     <div style={{ fontSize: 11, color: "#7B7496" }}>You Pay</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: "#1E0B4B" }}>${selectedDeal.amount?.toLocaleString()}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#1E0B4B" }}>{selectedDeal.amount?.toLocaleString()} FCFA</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: "#7B7496" }}>You Receive</div>
@@ -175,7 +175,7 @@ export default function InvestorDeals() {
                 </div>
                 <button onClick={() => handlePay(selectedDeal._id)} disabled={paying}
                   style={{ width: "100%", background: paying ? "#C4B5FD" : "linear-gradient(135deg,#7C6FFF,#9B89FF)", border: "none", borderRadius: 12, padding: 14, color: "#fff", fontSize: 15, fontWeight: 700, cursor: paying ? "not-allowed" : "pointer" }}>
-                  {paying ? "Processing Payment..." : `Confirm & Pay $${selectedDeal.amount?.toLocaleString()}`}
+                  {paying ? "Processing Payment..." : `Confirm & Pay ${selectedDeal.amount?.toLocaleString()} FCFA`}
                 </button>
               </div>
             )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, DollarSign, FolderKanban, Bookmark, ArrowUpRight, TrendingUp, Search } from "lucide-react";
-import api from "../../api/axios";
+import { getMyFundings, getMyWallet } from "../../api/backer";
 import useAuthStore from "../../store/authStore";
 
 const StatCard = ({ label, value, sub, Icon, color }) => (
@@ -31,8 +31,8 @@ export default function BackerHome() {
     const load = async () => {
       try {
         const [fRes, wRes] = await Promise.allSettled([
-          api.get("/projectsFunding/my-fundings"),
-          api.get("/wallet/my"),
+          getMyFundings(),
+          getMyWallet(),
         ]);
         if (fRes.status === "fulfilled") setFundings(fRes.value.data.fundings || fRes.value.data || []);
         if (wRes.status === "fulfilled") setWallet(wRes.value.data.wallet || wRes.value.data);
@@ -56,7 +56,13 @@ export default function BackerHome() {
       {/* Banner */}
       <div style={{ background:"linear-gradient(120deg,#1a0533 0%,#2d0f5c 50%,#1a0533 100%)",border:"1px solid rgba(236,72,153,0.2)",borderRadius:18,padding:"28px 32px",marginBottom:28,position:"relative",overflow:"hidden" }}>
         <div style={{ position:"absolute",right:-30,top:-30,width:160,height:160,background:"rgba(236,72,153,0.08)",borderRadius:"50%" }} />
-        <div style={{ position:"relative" }}>
+        <div style={{ position:"relative", display:"flex", alignItems:"flex-start", gap:16 }}>
+          <div style={{ width:52,height:52,borderRadius:"50%",background:"linear-gradient(135deg,#7C3AED,#EC4899)",border:"2px solid rgba(255,255,255,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden" }}>
+            {user?.profileImage
+              ? <img src={user.profileImage} style={{ width:"100%",height:"100%",objectFit:"cover" }} alt="" />
+              : <span style={{ color:"white",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:20 }}>{user?.name?.[0]?.toUpperCase()||"B"}</span>}
+          </div>
+          <div>
           <div style={{ color:"#EC4899",fontSize:13,fontWeight:600,marginBottom:6 }}>Welcome back</div>
           <div style={{ color:"#fff",fontSize:24,fontWeight:800,marginBottom:6 }}>{user?.name}</div>
           <div style={{ color:"rgba(255,255,255,0.45)",fontSize:14,marginBottom:22 }}>Support African innovation by backing the projects you believe in</div>
@@ -64,14 +70,15 @@ export default function BackerHome() {
             <button onClick={() => navigate("/backer/dashboard/browse")} style={{ background:"#EC4899",border:"none",borderRadius:10,padding:"10px 20px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>Browse Projects</button>
             <button onClick={() => navigate("/backer/dashboard/fundings")} style={{ background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"10px 20px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>My Fundings</button>
           </div>
+          </div>
         </div>
       </div>
 
       {/* Stats */}
       <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:28 }}>
-        <StatCard label="Total Contributed" value={`$${totalFunded.toLocaleString()}`} sub="Across all projects" Icon={DollarSign} color="#EC4899" />
+        <StatCard label="Total Contributed" value={`${totalFunded.toLocaleString()} FCFA`} sub="Across all projects" Icon={DollarSign} color="#EC4899" />
         <StatCard label="Projects Backed" value={fundings.length} sub="Active contributions" Icon={Heart} color="#7C3AED" />
-        <StatCard label="Wallet Balance" value={wallet ? `$${(wallet.balance||0).toLocaleString()}` : "—"} sub="Available funds" Icon={TrendingUp} color="#10B981" />
+        <StatCard label="Wallet Balance" value={wallet ? `${(wallet.balance||0).toLocaleString()} FCFA` : "—"} sub="Available funds" Icon={TrendingUp} color="#10B981" />
         <StatCard label="Projects Saved" value="—" sub="In your watchlist" Icon={Bookmark} color="#F59E0B" />
       </div>
 
@@ -101,7 +108,7 @@ export default function BackerHome() {
                   <div style={{ color:"#555",fontSize:11,marginTop:2 }}>{f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}</div>
                 </div>
               </div>
-              <div style={{ color:"#EC4899",fontSize:14,fontWeight:700 }}>${f.amount?.toLocaleString()}</div>
+              <div style={{ color:"#EC4899",fontSize:14,fontWeight:700 }}>{f.amount?.toLocaleString()} FCFA</div>
             </div>
           ))}
         </div>

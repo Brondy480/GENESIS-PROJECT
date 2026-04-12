@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search, X, CheckCircle, AlertCircle, FolderKanban } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, X, CheckCircle, AlertCircle, FolderKanban, Globe } from "lucide-react";
 import { getPublicProjects, sendInvestmentRequest } from "../../api/investor";
 
 const CATEGORIES = ["All", "technology", "agriculture", "health", "education", "energy", "finance"];
@@ -34,7 +34,7 @@ function ProjectCard({ project, onInvest }) {
         </div>
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#A09BBF", marginBottom: 6 }}>
-            <span>${(project.currentAmount || 0).toLocaleString()} raised</span>
+            <span>{(project.currentAmount || 0).toLocaleString()} FCFA raised</span>
             <span>{pct}%</span>
           </div>
           <div style={{ height: 6, background: "#F0EEFF", borderRadius: 99 }}>
@@ -44,7 +44,7 @@ function ProjectCard({ project, onInvest }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
           <div style={{ background: "#F8F7FF", borderRadius: 10, padding: "8px 12px" }}>
             <div style={{ fontSize: 11, color: "#A09BBF" }}>Valuation</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1E0B4B" }}>${(project.valuation || 0).toLocaleString()}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1E0B4B" }}>{(project.valuation || 0).toLocaleString()} FCFA</div>
           </div>
           <div style={{ background: "#F8F7FF", borderRadius: 10, padding: "8px 12px" }}>
             <div style={{ fontSize: 11, color: "#A09BBF" }}>Equity Available</div>
@@ -97,7 +97,7 @@ function InvestModal({ project, onClose, onSubmit }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "#1E0B4B", display: "block", marginBottom: 6 }}>Investment Amount (USD)</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#1E0B4B", display: "block", marginBottom: 6 }}>Investment Amount (FCFA)</label>
             <input value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} type="number"
               style={{ width: "100%", border: "1.5px solid #E8E4FF", borderRadius: 10, padding: "10px 14px", fontSize: 14, outline: "none", boxSizing: "border-box" }}
               placeholder="e.g. 10000" />
@@ -118,7 +118,7 @@ function InvestModal({ project, onClose, onSubmit }) {
         </div>
 
         <div style={{ background: "#F8F7FF", borderRadius: 12, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#7B7496" }}>
-          Valuation: <strong style={{ color: "#1E0B4B" }}>${(project.valuation || 0).toLocaleString()}</strong> · Available equity: <strong style={{ color: "#7C6FFF" }}>{project.equityAvailable}%</strong>
+          Valuation: <strong style={{ color: "#1E0B4B" }}>{(project.valuation || 0).toLocaleString()} FCFA</strong> · Available equity: <strong style={{ color: "#7C6FFF" }}>{project.equityAvailable}%</strong>
         </div>
 
         <div style={{ display: "flex", gap: 12 }}>
@@ -174,8 +174,27 @@ export default function InvestorBrowse() {
       )}
 
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: "#1E0B4B", marginBottom: 4 }}>Browse Projects</div>
-        <div style={{ fontSize: 14, color: "#7B7496" }}>Discover investment opportunities across Africa</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#1E0B4B", marginBottom: 4 }}>Browse Projects</div>
+            <div style={{ fontSize: 14, color: "#7B7496" }}>Discover investment opportunities across Africa</div>
+          </div>
+          <Link to="/feed" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 18px",
+            background: "linear-gradient(135deg, #7C6FFF, #9B89FF)",
+            color: "#fff",
+            borderRadius: 10,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 4px 12px rgba(124, 111, 255, 0.3)",
+          }}>
+            <Globe size={16} /> Go to Feed
+          </Link>
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: 14, marginBottom: 24, flexWrap: "wrap" }}>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, X, CheckCircle, AlertCircle, FolderKanban } from "lucide-react";
-import api from "../../api/axios";
+import { getPublicProjects, fundProject } from "../../api/backer";
 
 const CATS = ["All", "technology", "agriculture", "health", "education", "energy", "finance"];
 
@@ -31,7 +31,7 @@ function ProjectCard({ project, onFund }) {
         <div style={{ color: "#555", fontSize: 12, marginBottom: 14, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{project.description}</div>
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#555", marginBottom: 5 }}>
-            <span>${(project.currentAmount || 0).toLocaleString()} raised</span>
+            <span>{(project.currentAmount || 0).toLocaleString()} FCFA raised</span>
             <span>{pct}%</span>
           </div>
           <div style={{ height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 99 }}>
@@ -41,7 +41,7 @@ function ProjectCard({ project, onFund }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
           <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 10px" }}>
             <div style={{ fontSize: 10, color: "#555" }}>Goal</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>${(project.targetAmount || 0).toLocaleString()}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>{(project.targetAmount || 0).toLocaleString()} FCFA</div>
           </div>
           <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 10px" }}>
             <div style={{ fontSize: 10, color: "#555" }}>Deadline</div>
@@ -92,12 +92,12 @@ function FundModal({ project, onClose, onSubmit }) {
         )}
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 10 }}>Choose amount (USD)</label>
+          <label style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 10 }}>Choose amount (FCFA)</label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 12 }}>
             {PRESETS.map(p => (
               <button key={p} onClick={() => setAmount(String(p))}
                 style={{ padding: "9px 0", borderRadius: 8, border: "1px solid", borderColor: amount === String(p) ? "#EC4899" : "rgba(255,255,255,0.1)", background: amount === String(p) ? "rgba(236,72,153,0.15)" : "rgba(255,255,255,0.04)", color: amount === String(p) ? "#EC4899" : "#888", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                ${p}
+                {p} FCFA
               </button>
             ))}
           </div>
@@ -118,14 +118,14 @@ function FundModal({ project, onClose, onSubmit }) {
         </div>
 
         <div style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 20, fontSize: 13, color: "#EC4899" }}>
-          Contributing <strong>${amount || "0"}</strong> to <strong>{project.title}</strong>
+          Contributing <strong>{amount || "0"} FCFA</strong> to <strong>{project.title}</strong>
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#888", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
           <button onClick={handle} disabled={loading || !amount}
             style={{ flex: 2, padding: 12, borderRadius: 10, background: loading || !amount ? "rgba(236,72,153,0.3)" : "linear-gradient(135deg,#EC4899,#7C3AED)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: loading || !amount ? "not-allowed" : "pointer" }}>
-            {loading ? "Processing..." : `Confirm $${amount || "0"} Contribution`}
+            {loading ? "Processing..." : `Confirm ${amount || "0"} FCFA Contribution`}
           </button>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function BackerBrowse() {
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   useEffect(() => {
-    api.get("/publicProject")
+    getPublicProjects()
       .then(r => setProjects(r.data.projects || r.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -158,9 +158,8 @@ export default function BackerBrowse() {
   });
 
   const handleFund = async ({ amount, paymentMethod }) => {
-    // POST /projectsFunding/projects/:id/fund
-    await api.post(`/projectsFunding/projects/${selected._id}/fund`, { amount, paymentMethod });
-    showToast(`Successfully backed ${selected.title} with $${amount}!`);
+    await fundProject(selected._id, { amount, paymentMethod });
+    showToast(`Successfully backed ${selected.title} with ${amount} FCFA!`);
   };
 
   return (

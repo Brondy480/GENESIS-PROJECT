@@ -68,7 +68,7 @@ export default function LoginPage() {
 
           {/* Stats */}
           <div style={{ display:"flex", gap:32 }}>
-            {[{ n:"$2.4M+", l:"Raised" },{ n:"140+", l:"Projects" },{ n:"12", l:"Countries" }].map(s => (
+            {[{ n:"1.4B+ FCFA", l:"Raised" },{ n:"140+", l:"Projects" },{ n:"12", l:"Countries" }].map(s => (
               <div key={s.l}>
                 <div style={{ fontFamily:"var(--font-jakarta)", fontSize:22, fontWeight:800, color:"white", letterSpacing:"-0.02em" }}>{s.n}</div>
                 <div style={{ fontFamily:"var(--font-dm)", fontSize:12, color:"rgba(255,255,255,0.45)", marginTop:2 }}>{s.l}</div>
@@ -80,7 +80,7 @@ export default function LoginPage() {
         {/* Testimonial card */}
         <div style={{ position:"relative", zIndex:1, background:"rgba(255,255,255,0.08)", backdropFilter:"blur(16px)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:20, padding:"24px 28px" }}>
           <p style={{ fontFamily:"var(--font-dm)", fontSize:14, color:"rgba(255,255,255,0.8)", lineHeight:1.7, fontWeight:300, marginBottom:16 }}>
-            "Genesis helped me raise $480K for my solar project in just 3 months. The escrow system gave investors the confidence to commit."
+            "Genesis helped me raise 290M FCFA for my solar project in just 3 months. The escrow system gave investors the confidence to commit."
           </p>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <div style={{ width:36, height:36, background:"linear-gradient(135deg,#A78BFF,#7C3AED)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>

@@ -17,9 +17,7 @@ export const likeProject       = (id) => api.post(`/publicProject/${id}/like`);
 export const sendInvestmentRequest = (projectId, data) =>
   api.post(`/investment/projects/${projectId}/invest`, data);
 
-// Get my requests — NOTE: your docs don't list this endpoint explicitly.
-// Try this path first; if it 404s we'll use the creator one or build differently.
-export const getMyRequests = () => api.get("/investments/my-requests");
+export const getMyRequests = () => api.get("/investment/my-requests");
 
 // ── NEGOTIATION ────────────────────────────────────────────────────────
 export const sendCounterOffer = (reqId, data) => api.post(`/negotiation/${reqId}/counter`, data);
@@ -27,9 +25,8 @@ export const getMessages      = (reqId)       => api.get(`/negotiation/${reqId}/
 export const sendMessage      = (reqId, msg)  => api.post(`/negotiation/${reqId}/message`, { message: msg });
 
 // ── DEALS ─────────────────────────────────────────────────────────────
-export const getMyDeals  = ()   => api.get("/payment");
-export const getDealById = (id) => api.get(`/payment/${id}`);
-// Your endpoint: POST /payment/deal/:id/pay
+export const getMyDeals  = ()   => api.get("/payment/deal");
+export const getDealById = (id) => api.get(`/payment/deal/${id}`);
 export const payDeal     = (id) => api.post(`/payment/deal/${id}/pay`);
 
 // ── AGREEMENTS ────────────────────────────────────────────────────────
