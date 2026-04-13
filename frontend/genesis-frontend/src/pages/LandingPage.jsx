@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019606/DGaveclebic_vj5y6i.mp4";
-const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019586/DGenveste_wntyzq.mp4";
-const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019637/Jeune_uij1l7.mp4";
-const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019670/projectsurpapier_gtrq68.mp4";
-const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776027570/Vueaeriene_zb41vc.mp4";
+const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019606/DGaveclebic_vj5y6i.mp4";
+const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019586/DGenveste_wntyzq.mp4";
+const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019637/Jeune_uij1l7.mp4";
+const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019670/projectsurpapier_gtrq68.mp4";
+const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776027570/Vueaeriene_zb41vc.mp4";
 
 const VIDEOS = [vid1, vid2, vid3, vid4, vid5];
 
@@ -49,6 +49,7 @@ function HeroCarousel() {
   const refB = useRef(null);
   const curIdx = useRef(0);
   const switching = useRef(false);
+  const allVideos = useRef([]);
 
   useEffect(() => {
     const A = refA.current;
@@ -57,80 +58,91 @@ function HeroCarousel() {
 
     const getNext = (idx) => (idx + 1) % VIDEOS.length;
 
-    // Preload all videos aggressively
-    const preloadAll = () => {
-      VIDEOS.forEach((src) => {
-        const link = document.createElement("link");
-        link.rel = "preload";
-        link.as = "video";
-        link.href = src;
-        document.head.appendChild(link);
-      });
-    };
-    preloadAll();
+    // Preload ALL videos into hidden elements immediately
+    allVideos.current = VIDEOS.map((src, i) => {
+      const v = document.createElement("video");
+      v.src = src;
+      v.preload = "auto";
+      v.muted = true;
+      v.playsInline = true;
+      v.crossOrigin = "anonymous";
+      v.load();
+      return v;
+    });
 
-    // Set up both slots
+    // Also add <link rel="preload"> hints for the browser
+    VIDEOS.forEach((src) => {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "video";
+      link.href = src;
+      document.head.appendChild(link);
+    });
+
+    // Wait for a video to be ready to play
+    const waitReady = (vid, timeout = 8000) =>
+      new Promise((resolve) => {
+        if (vid.readyState >= 3) return resolve();
+        const onReady = () => {
+          vid.removeEventListener("canplay", onReady);
+          vid.removeEventListener("canplaythrough", onReady);
+          resolve();
+        };
+        vid.addEventListener("canplay", onReady);
+        vid.addEventListener("canplaythrough", onReady);
+        setTimeout(resolve, timeout);
+      });
+
+    // Load first two videos into the two slots
     A.src = VIDEOS[0];
     A.preload = "auto";
+    A.crossOrigin = "anonymous";
     A.load();
 
     B.src = VIDEOS[1 % VIDEOS.length];
     B.preload = "auto";
+    B.crossOrigin = "anonymous";
     B.load();
-
-    // Wait for video to be truly ready
-    const waitReady = (vid) =>
-      new Promise((resolve) => {
-        if (vid.readyState >= 4) return resolve();
-        const check = () => {
-          if (vid.readyState >= 4) {
-            vid.removeEventListener("progress", check);
-            vid.removeEventListener("canplaythrough", check);
-            resolve();
-          }
-        };
-        vid.addEventListener("canplaythrough", check);
-        vid.addEventListener("progress", check);
-        setTimeout(resolve, 3000);
-      });
 
     const switchToNext = async () => {
       if (switching.current) return;
       switching.current = true;
 
-      const currentIsA = curIdx.current % 2 === 0;
-      const incoming = currentIsA ? B : A;
-      const outgoing = currentIsA ? A : B;
       const nextIdx = getNext(curIdx.current);
       const afterNextIdx = getNext(nextIdx);
+      const isAOnTop = curIdx.current % 2 === 0;
+      const incoming = isAOnTop ? B : A;
+      const outgoing = isAOnTop ? A : B;
 
-      // Make sure incoming is ready
-      await waitReady(incoming);
+      // Wait for incoming to be ready — max 3 seconds
+      await waitReady(incoming, 3000);
 
       // Switch instantly
       incoming.currentTime = 0;
-      const playPromise = incoming.play();
-      if (playPromise) await playPromise.catch(() => {});
+      await incoming.play().catch(() => {});
 
-      // Update UI
-      setActiveSlot(currentIsA ? 1 : 0);
+      // Update UI — crossfade
+      setActiveSlot(isAOnTop ? 1 : 0);
       setDotIdx(nextIdx);
       curIdx.current = nextIdx;
 
-      // Immediately load the video after next into outgoing
-      outgoing.src = VIDEOS[afterNextIdx];
-      outgoing.preload = "auto";
-      outgoing.load();
+      // Load the video after next into outgoing slot immediately
+      setTimeout(() => {
+        outgoing.src = VIDEOS[afterNextIdx];
+        outgoing.preload = "auto";
+        outgoing.crossOrigin = "anonymous";
+        outgoing.load();
+      }, CROSSFADE_MS + 100);
 
       switching.current = false;
     };
 
-    // Use timeupdate to switch slightly BEFORE video ends
-    // This eliminates the gap completely
+    // Use timeupdate to switch BEFORE video ends — seamless transition
     const handleTimeUpdateA = () => {
       if (!A.duration) return;
       const timeLeft = A.duration - A.currentTime;
-      if (timeLeft <= (CROSSFADE_MS / 1000) && curIdx.current % 2 === 0) {
+      const isAActive = curIdx.current % 2 === 0;
+      if (isAActive && (timeLeft <= CROSSFADE_MS / 1000 || A.currentTime >= CLIP_DURATION)) {
         switchToNext();
       }
     };
@@ -138,7 +150,8 @@ function HeroCarousel() {
     const handleTimeUpdateB = () => {
       if (!B.duration) return;
       const timeLeft = B.duration - B.currentTime;
-      if (timeLeft <= (CROSSFADE_MS / 1000) && curIdx.current % 2 === 1) {
+      const isBActive = curIdx.current % 2 === 1;
+      if (isBActive && (timeLeft <= CROSSFADE_MS / 1000 || B.currentTime >= CLIP_DURATION)) {
         switchToNext();
       }
     };
@@ -146,24 +159,8 @@ function HeroCarousel() {
     A.addEventListener("timeupdate", handleTimeUpdateA);
     B.addEventListener("timeupdate", handleTimeUpdateB);
 
-    // Also enforce CLIP_DURATION — switch after 6 seconds max
-    const handleTimeUpdateAClip = () => {
-      if (A.currentTime >= CLIP_DURATION && curIdx.current % 2 === 0) {
-        switchToNext();
-      }
-    };
-
-    const handleTimeUpdateBClip = () => {
-      if (B.currentTime >= CLIP_DURATION && curIdx.current % 2 === 1) {
-        switchToNext();
-      }
-    };
-
-    A.addEventListener("timeupdate", handleTimeUpdateAClip);
-    B.addEventListener("timeupdate", handleTimeUpdateBClip);
-
-    // Start playing
-    waitReady(A).then(() => {
+    // Start playing once A is ready
+    waitReady(A, 10000).then(() => {
       A.currentTime = 0;
       A.play().catch(() => {});
     });
@@ -171,8 +168,9 @@ function HeroCarousel() {
     return () => {
       A.removeEventListener("timeupdate", handleTimeUpdateA);
       B.removeEventListener("timeupdate", handleTimeUpdateB);
-      A.removeEventListener("timeupdate", handleTimeUpdateAClip);
-      B.removeEventListener("timeupdate", handleTimeUpdateBClip);
+      allVideos.current.forEach((v) => {
+        v.src = "";
+      });
     };
   }, []);
 
@@ -184,11 +182,13 @@ function HeroCarousel() {
       overflow: "hidden",
       background: "#0D0621",
     }}>
+      {/* Slot A */}
       <video
         ref={refA}
         muted
         playsInline
         preload="auto"
+        crossOrigin="anonymous"
         style={{
           position: "absolute",
           inset: 0,
@@ -200,11 +200,13 @@ function HeroCarousel() {
           zIndex: activeSlot === 0 ? 2 : 1,
         }}
       />
+      {/* Slot B */}
       <video
         ref={refB}
         muted
         playsInline
         preload="auto"
+        crossOrigin="anonymous"
         style={{
           position: "absolute",
           inset: 0,
@@ -216,6 +218,7 @@ function HeroCarousel() {
           zIndex: activeSlot === 1 ? 2 : 1,
         }}
       />
+      {/* Dot indicators */}
       <div style={{
         position: "absolute",
         bottom: 20,
