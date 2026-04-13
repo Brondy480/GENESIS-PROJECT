@@ -16,8 +16,8 @@ const PROJECTS = [
 ];
 
 const CLIP_DURATION = 6;   // seconds per video
-const CROSSFADE_MS  = 600; // crossfade in milliseconds
- 
+const CROSSFADE_MS  = 300; // crossfade in milliseconds
+  
 const TABS = [
   { id:"investor", icon:"📈", label:"Investors", color:"#7C3AED",
     title:"Own equity in Africa's next unicorns",
@@ -42,91 +42,137 @@ const STEPS = [
 
 /* ── VIDEO CAROUSEL — seamless dual-video crossfade ── */
 
-
 function HeroCarousel() {
   const [activeSlot, setActiveSlot] = useState(0);
   const [dotIdx, setDotIdx] = useState(0);
   const refA = useRef(null);
   const refB = useRef(null);
   const curIdx = useRef(0);
-  const timerRef = useRef(null);
+  const switching = useRef(false);
 
   useEffect(() => {
     const A = refA.current;
     const B = refB.current;
     if (!A || !B) return;
 
-    // Preload ALL videos into hidden video elements upfront
-    const preloaded = VIDEOS.map((src) => {
-      const v = document.createElement("video");
-      v.src = src;
-      v.preload = "auto";
-      v.muted = true;
-      v.load();
-      return v;
-    });
+    const getNext = (idx) => (idx + 1) % VIDEOS.length;
 
-    // Load first video into A and second into B immediately
+    // Preload all videos aggressively
+    const preloadAll = () => {
+      VIDEOS.forEach((src) => {
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "video";
+        link.href = src;
+        document.head.appendChild(link);
+      });
+    };
+    preloadAll();
+
+    // Set up both slots
     A.src = VIDEOS[0];
+    A.preload = "auto";
     A.load();
-    B.src = VIDEOS[1] || VIDEOS[0];
+
+    B.src = VIDEOS[1 % VIDEOS.length];
+    B.preload = "auto";
     B.load();
 
-    // Wait for both A and B to be ready before starting
+    // Wait for video to be truly ready
     const waitReady = (vid) =>
       new Promise((resolve) => {
-        if (vid.readyState >= 3) return resolve();
-        vid.addEventListener("canplaythrough", resolve, { once: true });
-        setTimeout(resolve, 4000); // max wait 4s
+        if (vid.readyState >= 4) return resolve();
+        const check = () => {
+          if (vid.readyState >= 4) {
+            vid.removeEventListener("progress", check);
+            vid.removeEventListener("canplaythrough", check);
+            resolve();
+          }
+        };
+        vid.addEventListener("canplaythrough", check);
+        vid.addEventListener("progress", check);
+        setTimeout(resolve, 3000);
       });
 
-    Promise.all([waitReady(A), waitReady(B)]).then(() => {
-      // Start playing A
+    const switchToNext = async () => {
+      if (switching.current) return;
+      switching.current = true;
+
+      const currentIsA = curIdx.current % 2 === 0;
+      const incoming = currentIsA ? B : A;
+      const outgoing = currentIsA ? A : B;
+      const nextIdx = getNext(curIdx.current);
+      const afterNextIdx = getNext(nextIdx);
+
+      // Make sure incoming is ready
+      await waitReady(incoming);
+
+      // Switch instantly
+      incoming.currentTime = 0;
+      const playPromise = incoming.play();
+      if (playPromise) await playPromise.catch(() => {});
+
+      // Update UI
+      setActiveSlot(currentIsA ? 1 : 0);
+      setDotIdx(nextIdx);
+      curIdx.current = nextIdx;
+
+      // Immediately load the video after next into outgoing
+      outgoing.src = VIDEOS[afterNextIdx];
+      outgoing.preload = "auto";
+      outgoing.load();
+
+      switching.current = false;
+    };
+
+    // Use timeupdate to switch slightly BEFORE video ends
+    // This eliminates the gap completely
+    const handleTimeUpdateA = () => {
+      if (!A.duration) return;
+      const timeLeft = A.duration - A.currentTime;
+      if (timeLeft <= (CROSSFADE_MS / 1000) && curIdx.current % 2 === 0) {
+        switchToNext();
+      }
+    };
+
+    const handleTimeUpdateB = () => {
+      if (!B.duration) return;
+      const timeLeft = B.duration - B.currentTime;
+      if (timeLeft <= (CROSSFADE_MS / 1000) && curIdx.current % 2 === 1) {
+        switchToNext();
+      }
+    };
+
+    A.addEventListener("timeupdate", handleTimeUpdateA);
+    B.addEventListener("timeupdate", handleTimeUpdateB);
+
+    // Also enforce CLIP_DURATION — switch after 6 seconds max
+    const handleTimeUpdateAClip = () => {
+      if (A.currentTime >= CLIP_DURATION && curIdx.current % 2 === 0) {
+        switchToNext();
+      }
+    };
+
+    const handleTimeUpdateBClip = () => {
+      if (B.currentTime >= CLIP_DURATION && curIdx.current % 2 === 1) {
+        switchToNext();
+      }
+    };
+
+    A.addEventListener("timeupdate", handleTimeUpdateAClip);
+    B.addEventListener("timeupdate", handleTimeUpdateBClip);
+
+    // Start playing
+    waitReady(A).then(() => {
       A.currentTime = 0;
       A.play().catch(() => {});
-
-      // Schedule transitions
-      const runCycle = () => {
-        timerRef.current = setTimeout(async () => {
-          const nextIdx = (curIdx.current + 1) % VIDEOS.length;
-          const afterNextIdx = (nextIdx + 1) % VIDEOS.length;
-          const isAOnTop = curIdx.current % 2 === 0;
-          const incoming = isAOnTop ? B : A;
-          const outgoing = isAOnTop ? A : B;
-
-          // Incoming already has the right video preloaded
-          // Just make sure it is at start and ready
-          incoming.currentTime = 0;
-
-          // Play incoming immediately — no waiting
-          incoming.play().catch(() => {});
-
-          // Crossfade by swapping z-index and opacity via state
-          setActiveSlot(isAOnTop ? 1 : 0);
-          setDotIdx(nextIdx);
-          curIdx.current = nextIdx;
-
-          // Load NEXT next video into outgoing slot immediately
-          // so it is ready for when it is needed
-          setTimeout(() => {
-            outgoing.src = VIDEOS[afterNextIdx];
-            outgoing.load();
-            outgoing.currentTime = 0;
-          }, CROSSFADE_MS + 100);
-
-          runCycle();
-        }, CLIP_DURATION * 1000);
-      };
-
-      runCycle();
     });
 
     return () => {
-      clearTimeout(timerRef.current);
-      preloaded.forEach((v) => {
-        v.src = "";
-        v.load();
-      });
+      A.removeEventListener("timeupdate", handleTimeUpdateA);
+      B.removeEventListener("timeupdate", handleTimeUpdateB);
+      A.removeEventListener("timeupdate", handleTimeUpdateAClip);
+      B.removeEventListener("timeupdate", handleTimeUpdateBClip);
     };
   }, []);
 
@@ -136,7 +182,7 @@ function HeroCarousel() {
       width: "100%",
       height: "100%",
       overflow: "hidden",
-      background: "#000",
+      background: "#0D0621",
     }}>
       <video
         ref={refA}
