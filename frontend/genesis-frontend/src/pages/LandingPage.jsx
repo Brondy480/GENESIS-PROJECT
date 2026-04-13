@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019606/DGaveclebic_vj5y6i.mp4";
-const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019586/DGenveste_wntyzq.mp4";
-const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019637/Jeune_uij1l7.mp4";
-const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776019670/projectsurpapier_gtrq68.mp4";
-const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/q_auto,f_auto,vc_h264,w_1280,h_720,c_fill/v1776027570/Vueaeriene_zb41vc.mp4";
+const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019606/DGaveclebic_vj5y6i.mp4";
+const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019586/DGenveste_wntyzq.mp4";
+const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019637/Jeune_uij1l7.mp4";
+const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019670/projectsurpapier_gtrq68.mp4";
+const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776027570/Vueaeriene_zb41vc.mp4";
 
 const VIDEOS = [vid1, vid2, vid3, vid4, vid5];
 
