@@ -57,6 +57,8 @@ app.use(cors({
     "http://localhost:5174",
     "http://localhost:3000",
     "http://localhost:8081",
+    "https://genesis-project-seven.vercel.app",
+  process.env.FRONTEND_URL,
   ],
   credentials: true,
 }));
