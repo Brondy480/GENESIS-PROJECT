@@ -55,17 +55,25 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",
-  "http://localhost:8081",
   "https://genesis-project-seven.vercel.app",
   process.env.FRONTEND_URL,
-].filter(Boolean); // removes undefined values
+].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (Postman, mobile apps)
     if (!origin) return callback(null, true);
+    
+    // Allow any vercel.app subdomain for this project
+    if (origin.includes("genesis-project") && origin.includes("vercel.app")) {
+      return callback(null, true);
+    }
+    
+    // Allow specific origins
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+    
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
