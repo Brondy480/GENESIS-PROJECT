@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-import vid1 from "../assets/DGaveclebic.mp4";
-import vid2 from "../assets/DGenveste.mp4";
-import vid3 from "../assets/jeune.mp4";
-import vid4 from "../assets/projectsurpapier.mp4";
-import vid5 from "../assets/Vueaeriene.mp4";
+const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019606/DGaveclebic_vj5y6i.mp4";
+const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019586/DGenveste_wntyzq.mp4";
+const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019637/Jeune_uij1l7.mp4";
+const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019670/projectsurpapier_gtrq68.mp4";
+const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776027570/Vueaeriene_zb41vc.mp4";
 
 const VIDEOS = [vid1, vid2, vid3, vid4, vid5];
 
@@ -15,6 +15,9 @@ const PROJECTS = [
   { id:3, title:"MediConnect",        cat:"HealthTech", loc:"Accra, GH",   raised:150, goal:300, equity:"15%", val:"1.2B FCFA",  days:31, hot:false, img:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop&q=80" },
 ];
 
+const CLIP_DURATION = 6;   // seconds per video
+const CROSSFADE_MS  = 600; // crossfade in milliseconds
+ 
 const TABS = [
   { id:"investor", icon:"📈", label:"Investors", color:"#7C3AED",
     title:"Own equity in Africa's next unicorns",
@@ -38,127 +41,154 @@ const STEPS = [
 ];
 
 /* ── VIDEO CAROUSEL — seamless dual-video crossfade ── */
-const CLIP_DURATION = 6;   // seconds to play per clip
-const CROSSFADE_MS  = 900; // crossfade duration in ms
+
 
 function HeroCarousel() {
-  const [activeSlot, setActiveSlot] = useState(0); // 0 = A on top, 1 = B on top
-  const [dotIdx,     setDotIdx]     = useState(0);
-  const refA   = useRef(null);
-  const refB   = useRef(null);
-  const curIdx = useRef(0);   // current video index
-  const busy   = useRef(false);
+  const [activeSlot, setActiveSlot] = useState(0);
+  const [dotIdx, setDotIdx] = useState(0);
+  const refA = useRef(null);
+  const refB = useRef(null);
+  const curIdx = useRef(0);
+  const timerRef = useRef(null);
 
-  const getActive   = () => activeSlot === 0 ? refA.current : refB.current;
-  const getInactive = () => activeSlot === 0 ? refB.current : refA.current;
-
-  const crossfadeTo = (nextIdx) => {
-    if (busy.current) return;
-    busy.current = true;
-    curIdx.current = nextIdx;
-    setDotIdx(nextIdx);
-
-    const next = getInactive();
-    if (!next) { busy.current = false; return; }
-    next.src = VIDEOS[nextIdx];
-    next.currentTime = 0;
-    next.load();
-    next.play().catch(() => {});
-
-    setActiveSlot(s => s === 0 ? 1 : 0);
-    setTimeout(() => { busy.current = false; }, CROSSFADE_MS + 150);
-  };
-
-  const goNext = () => crossfadeTo((curIdx.current + 1) % VIDEOS.length);
-
-  // timeupdate: cut clip at CLIP_DURATION seconds
-  const onTimeUpdate = (slot) => (e) => {
-    if (slot !== activeSlot) return;
-    if (e.target.currentTime >= CLIP_DURATION) goNext();
-  };
-
-  // Boot
   useEffect(() => {
-    const a = refA.current;
-    const b = refB.current;
-    if (!a || !b) return;
-    a.src = VIDEOS[0]; a.currentTime = 0; a.load(); a.play().catch(() => {});
-    b.src = VIDEOS[1]; b.currentTime = 0; b.load(); // preload silently
+    const A = refA.current;
+    const B = refB.current;
+    if (!A || !B) return;
+
+    // Preload ALL videos into hidden video elements upfront
+    const preloaded = VIDEOS.map((src) => {
+      const v = document.createElement("video");
+      v.src = src;
+      v.preload = "auto";
+      v.muted = true;
+      v.load();
+      return v;
+    });
+
+    // Load first video into A and second into B immediately
+    A.src = VIDEOS[0];
+    A.load();
+    B.src = VIDEOS[1] || VIDEOS[0];
+    B.load();
+
+    // Wait for both A and B to be ready before starting
+    const waitReady = (vid) =>
+      new Promise((resolve) => {
+        if (vid.readyState >= 3) return resolve();
+        vid.addEventListener("canplaythrough", resolve, { once: true });
+        setTimeout(resolve, 4000); // max wait 4s
+      });
+
+    Promise.all([waitReady(A), waitReady(B)]).then(() => {
+      // Start playing A
+      A.currentTime = 0;
+      A.play().catch(() => {});
+
+      // Schedule transitions
+      const runCycle = () => {
+        timerRef.current = setTimeout(async () => {
+          const nextIdx = (curIdx.current + 1) % VIDEOS.length;
+          const afterNextIdx = (nextIdx + 1) % VIDEOS.length;
+          const isAOnTop = curIdx.current % 2 === 0;
+          const incoming = isAOnTop ? B : A;
+          const outgoing = isAOnTop ? A : B;
+
+          // Incoming already has the right video preloaded
+          // Just make sure it is at start and ready
+          incoming.currentTime = 0;
+
+          // Play incoming immediately — no waiting
+          incoming.play().catch(() => {});
+
+          // Crossfade by swapping z-index and opacity via state
+          setActiveSlot(isAOnTop ? 1 : 0);
+          setDotIdx(nextIdx);
+          curIdx.current = nextIdx;
+
+          // Load NEXT next video into outgoing slot immediately
+          // so it is ready for when it is needed
+          setTimeout(() => {
+            outgoing.src = VIDEOS[afterNextIdx];
+            outgoing.load();
+            outgoing.currentTime = 0;
+          }, CROSSFADE_MS + 100);
+
+          runCycle();
+        }, CLIP_DURATION * 1000);
+      };
+
+      runCycle();
+    });
+
+    return () => {
+      clearTimeout(timerRef.current);
+      preloaded.forEach((v) => {
+        v.src = "";
+        v.load();
+      });
+    };
   }, []);
 
-  const vidStyle = (slot) => ({
-    position:"absolute", inset:0,
-    width:"100%", height:"100%",
-    objectFit:"cover", objectPosition:"center top",
-    display:"block",
-    opacity:   activeSlot === slot ? 1 : 0,
-    zIndex:    activeSlot === slot ? 2 : 1,
-    transition:`opacity ${CROSSFADE_MS}ms ease`,
-  });
-
   return (
-    <div style={{ position:"relative", overflow:"hidden" }}>
-      <video ref={refA} muted playsInline style={vidStyle(0)} onTimeUpdate={onTimeUpdate(0)} />
-      <video ref={refB} muted playsInline style={vidStyle(1)} onTimeUpdate={onTimeUpdate(1)} />
-
-      {/* Dark overlay */}
-      <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom,rgba(124,58,237,0.1) 0%,rgba(13,6,33,0.55) 100%)", zIndex:1 }} />
-
-      {/* Floating badge — Escrow */}
-      <div className="animate-floatA" style={{ position:"absolute", bottom:"22%", left:"6%", background:"white", borderRadius:16, padding:"14px 18px", display:"flex", alignItems:"center", gap:12, boxShadow:"0 8px 32px rgba(124,58,237,0.18)", zIndex:3 }}>
-        <div style={{ width:38, height:38, background:"#EDE9FE", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🔐</div>
-        <div>
-          <div style={{ fontSize:12, fontWeight:700, color:"#7C3AED", fontFamily:"var(--font-jakarta)", marginBottom:2 }}>Escrow Active</div>
-          <div style={{ fontSize:11, color:"rgba(13,6,33,0.4)", fontFamily:"var(--font-dm)" }}>6,000,000 FCFA secured</div>
-        </div>
-      </div>
-
-      {/* Floating badge — Deal Signed */}
-      <div style={{ position:"absolute", bottom:"8%", right:"6%", background:"white", borderRadius:16, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, boxShadow:"0 8px 32px rgba(124,58,237,0.15)", zIndex:3, animation:"floatA 6s 1.2s ease-in-out infinite" }}>
-        <div style={{ width:34, height:34, background:"#F0FDF4", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>✅</div>
-        <div>
-          <div style={{ fontSize:12, fontWeight:700, color:"#16A34A", fontFamily:"var(--font-jakarta)" }}>Deal Signed</div>
-          <div style={{ fontSize:11, color:"rgba(13,6,33,0.38)", fontFamily:"var(--font-dm)" }}>Agreement validated</div>
-        </div>
-      </div>
-
-      {/* Live deals badge */}
-      <div style={{ position:"absolute", top:"12%", right:"8%", background:"white", borderRadius:16, padding:"10px 16px", display:"flex", alignItems:"center", gap:8, boxShadow:"0 8px 24px rgba(0,0,0,0.1)", zIndex:3 }}>
-        <div className="animate-blink" style={{ width:8, height:8, background:"#22C55E", borderRadius:"50%" }} />
-        <span style={{ fontSize:12, fontWeight:700, color:"#16A34A", fontFamily:"var(--font-jakarta)" }}>12 Live Deals</span>
-      </div>
-
-      {/* Dots */}
-      <div style={{ position:"absolute", bottom:20, left:"50%", transform:"translateX(-50%)", display:"flex", gap:7, zIndex:4 }}>
+    <div style={{
+      position: "relative",
+      width: "100%",
+      height: "100%",
+      overflow: "hidden",
+      background: "#000",
+    }}>
+      <video
+        ref={refA}
+        muted
+        playsInline
+        preload="auto"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: activeSlot === 0 ? 1 : 0,
+          transition: `opacity ${CROSSFADE_MS}ms ease-in-out`,
+          zIndex: activeSlot === 0 ? 2 : 1,
+        }}
+      />
+      <video
+        ref={refB}
+        muted
+        playsInline
+        preload="auto"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: activeSlot === 1 ? 1 : 0,
+          transition: `opacity ${CROSSFADE_MS}ms ease-in-out`,
+          zIndex: activeSlot === 1 ? 2 : 1,
+        }}
+      />
+      <div style={{
+        position: "absolute",
+        bottom: 20,
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        gap: 8,
+        zIndex: 10,
+      }}>
         {VIDEOS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => crossfadeTo(i)}
-            style={{
-              width: dotIdx===i ? 24 : 7,
-              height:7, borderRadius:4, border:"none", cursor:"pointer",
-              background: dotIdx===i ? "white" : "rgba(255,255,255,0.4)",
-              padding:0, transition:"all 0.3s ease",
-            }}
-          />
+          <div key={i} style={{
+            width: i === dotIdx ? 24 : 8,
+            height: 8,
+            borderRadius: 4,
+            background: i === dotIdx ? "white" : "rgba(255,255,255,0.4)",
+            transition: "all 0.3s ease",
+          }} />
         ))}
       </div>
-
-      {/* Arrow next */}
-      <button
-        onClick={goNext}
-        style={{
-          position:"absolute", right:14, top:"50%", transform:"translateY(-50%)",
-          width:38, height:38, borderRadius:"50%", border:"none", cursor:"pointer",
-          background:"rgba(255,255,255,0.18)", backdropFilter:"blur(8px)",
-          color:"white", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center",
-          zIndex:4, transition:"all 0.2s",
-        }}
-        onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.3)"}
-        onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.18)"}
-      >
-        ›
-      </button>
     </div>
   );
 }
