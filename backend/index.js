@@ -28,6 +28,50 @@ import paymentRoutes from "./routes/paymentRoutes.js"
 import { generateReceipt } from "./controllers/receiptGenerator.js";
 import notificationRoutes from "./routes/notification.route.js";
 import walletRoutes from "./routes/wallet.route.js";
+// Prometheus metrics endpoint
+import { register, collectDefaultMetrics, Counter, Histogram } from 'prom-client';
+
+// Collect default Node.js metrics (memory, CPU, etc.)
+collectDefaultMetrics({ register });
+
+// Custom metric: count total HTTP requests
+const httpRequestsTotal = new Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code'],
+});
+
+// Custom metric: track request duration
+const httpRequestDuration = new Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10],
+});
+
+// Middleware to record metrics for every request
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = (Date.now() - start) / 1000;
+    httpRequestsTotal.inc({
+      method: req.method,
+      route: req.route?.path || req.path,
+      status_code: res.statusCode,
+    });
+    httpRequestDuration.observe(
+      { method: req.method, route: req.route?.path || req.path, status_code: res.statusCode },
+      duration
+    );
+  });
+  next();
+});
+
+// Expose metrics endpoint for Prometheus to scrape
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 
 

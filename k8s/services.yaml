@@ -1,0 +1,48 @@
+# services.yaml
+# Services define how components communicate with each other
+# and how they are exposed to users
+
+---
+# Backend service — internal access only
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: genesis-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP    # only accessible inside the cluster
+
+---
+# Frontend service — accessible from internet
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: genesis-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer    # gets a public IP address
+
+---
+# MongoDB service — internal access only
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP    # databases should never be public

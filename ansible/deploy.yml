@@ -1,0 +1,56 @@
+---
+# deploy.yml — Deploy Genesis platform to the server
+# Run with: ansible-playbook -i inventory.ini deploy.yml
+
+- name: Deploy Genesis Platform
+  hosts: webservers
+  become: yes
+
+  vars:
+    app_directory: /opt/genesis
+
+  tasks:
+
+    # Copy application files to server
+    - name: Copy application files
+      copy:
+        src: ../
+        dest: "{{ app_directory }}"
+        owner: ubuntu
+        group: ubuntu
+
+    # Copy environment file
+    - name: Copy environment configuration
+      copy:
+        src: ../.env
+        dest: "{{ app_directory }}/.env"
+        mode: '0600'  # only owner can read — keeps secrets safe
+
+    # Stop existing containers
+    - name: Stop existing containers
+      command: docker-compose down
+      args:
+        chdir: "{{ app_directory }}"
+      ignore_errors: yes
+
+    # Build and start containers
+    - name: Build Docker images
+      command: docker-compose build
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Start all services
+      command: docker-compose up -d
+      args:
+        chdir: "{{ app_directory }}"
+
+    # Verify deployment
+    - name: Wait for backend to be ready
+      wait_for:
+        host: localhost
+        port: 8080
+        timeout: 60
+
+    - name: Deployment successful
+      debug:
+        msg: "Genesis platform is live at http://{{ inventory_hostname }}"

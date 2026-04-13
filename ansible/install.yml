@@ -1,0 +1,107 @@
+---
+# install.yml — Install all required software on a fresh Ubuntu server
+# Run with: ansible-playbook -i inventory.ini install.yml
+
+- name: Setup Genesis Platform Server
+  hosts: webservers
+  become: yes  # run as sudo
+
+  tasks:
+
+    # Update the system package list
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    # Install Node.js 18
+    - name: Install Node.js 18
+      block:
+        - name: Download NodeSource setup script
+          get_url:
+            url: https://deb.nodesource.com/setup_18.x
+            dest: /tmp/nodesource_setup.sh
+            mode: '0755'
+        - name: Run NodeSource setup
+          command: bash /tmp/nodesource_setup.sh
+        - name: Install Node.js
+          apt:
+            name: nodejs
+            state: present
+
+    # Install Docker
+    - name: Install Docker
+      block:
+        - name: Install Docker dependencies
+          apt:
+            name:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - gnupg
+            state: present
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+        - name: Add Docker repository
+          apt_repository:
+            repo: deb https://download.docker.com/linux/ubuntu focal stable
+        - name: Install Docker Engine
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+            state: present
+        - name: Start Docker service
+          service:
+            name: docker
+            state: started
+            enabled: yes
+
+    # Install Docker Compose
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    # Install Nginx
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    # Install MongoDB
+    - name: Install MongoDB
+      block:
+        - name: Add MongoDB GPG key
+          apt_key:
+            url: https://www.mongodb.org/static/pgp/server-7.0.asc
+            state: present
+        - name: Add MongoDB repository
+          apt_repository:
+            repo: deb https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/7.0 multiverse
+        - name: Install MongoDB
+          apt:
+            name: mongodb-org
+            state: present
+        - name: Start MongoDB
+          service:
+            name: mongod
+            state: started
+            enabled: yes
+
+    # Create app directory
+    - name: Create Genesis app directory
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Installation complete
+      debug:
+        msg: "Server is ready for Genesis deployment!"

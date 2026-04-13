@@ -1,0 +1,71 @@
+# backend-deployment.yaml
+# Runs 2 copies of the backend for high availability
+# If one crashes, the other keeps serving requests
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: genesis-backend
+  labels:
+    app: genesis-backend
+
+spec:
+  replicas: 2    # run 2 copies simultaneously
+  selector:
+    matchLabels:
+      app: genesis-backend
+  
+  template:
+    metadata:
+      labels:
+        app: genesis-backend
+    
+    spec:
+      containers:
+        - name: backend
+          image: genesis-backend:latest
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - containerPort: 8080
+          
+          # Resource limits — prevent one pod from using all server resources
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          
+          # Environment variables from Kubernetes secrets
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: genesis-secrets
+                  key: mongo-uri
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: genesis-secrets
+                  key: jwt-secret
+          
+          # Health check — Kubernetes restarts pod if this fails
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
