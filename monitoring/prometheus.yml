@@ -15,7 +15,7 @@ scrape_configs:
   # Monitor the Genesis backend
   - job_name: 'genesis-backend'
     static_configs:
-      - targets: ['backend:8080']
+      - targets: ['backend:8180']
     metrics_path: '/metrics'
     scrape_interval: 10s
 

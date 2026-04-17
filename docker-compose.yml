@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
 
@@ -11,7 +11,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: genesis_secret_2024
     volumes:
-      - mongodb_data:/data/db    # data persists even if container restarts
+      - mongodb_data:/data/db
     ports:
       - "27017:27017"
     networks:
@@ -35,9 +35,9 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       PAYMENT_MODE: mvp
     ports:
-      - "8080:8080"
+      - "8180:8080"
     depends_on:
-      - mongodb        # backend starts only after mongodb is ready
+      - mongodb
     networks:
       - genesis-network
 
@@ -55,16 +55,7 @@ services:
     networks:
       - genesis-network
 
-# Persistent storage for MongoDB
-volumes:
-  mongodb_data:
-
-# Internal network so containers can talk to each other
-networks:
-  genesis-network:
-    driver: bridge
-
-    # Prometheus — collects metrics
+  # Prometheus
   prometheus:
     image: prom/prometheus:latest
     container_name: genesis-prometheus
@@ -75,7 +66,7 @@ networks:
     networks:
       - genesis-network
 
-  # Grafana — displays metrics as dashboards
+  # Grafana
   grafana:
     image: grafana/grafana:latest
     container_name: genesis-grafana
@@ -87,3 +78,10 @@ networks:
       - prometheus
     networks:
       - genesis-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  genesis-network:
+    driver: bridge

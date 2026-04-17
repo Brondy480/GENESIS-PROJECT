@@ -1,23 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-const vid1 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019606/DGaveclebic_vj5y6i.mp4";
-const vid2 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019586/DGenveste_wntyzq.mp4";
-const vid3 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019637/Jeune_uij1l7.mp4";
-const vid4 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776019670/projectsurpapier_gtrq68.mp4";
-const vid5 = "https://res.cloudinary.com/dbp1gdnsg/video/upload/v1776027570/Vueaeriene_zb41vc.mp4";
+import img1 from "../assets/ceo1.jpg";
+import img2 from "../assets/ceo2.jpg";
+import img3 from "../assets/ceo3.jpg";
+import img4 from "../assets/engeenerWithBlackMan.jpg";
 
-const VIDEOS = [vid1, vid2, vid3, vid4, vid5];
+const IMAGES = [img1, img2, img3, img4];
+const IMAGE_DURATION = 5000;
+const IMAGE_CROSSFADE = 800;
 
 const PROJECTS = [
   { id:1, title:"SolarGrid Africa",   cat:"Energy",     loc:"Lagos, NG",   raised:480, goal:500, equity:"12%", val:"2.4B FCFA",  days:8,  hot:true,  img:"https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=600&h=400&fit=crop&q=80" },
-  { id:2, title:"AgriChain Platform", cat:"AgriTech",   loc:"Nairobi, KE", raised:210, goal:400, equity:"18%", val:"1.3B FCFA",days:24, hot:false, img:"https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=400&fit=crop&q=80" },
+  { id:2, title:"AgriChain Platform", cat:"AgriTech",   loc:"Nairobi, KE", raised:210, goal:400, equity:"18%", val:"1.3B FCFA",  days:24, hot:false, img:"https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=400&fit=crop&q=80" },
   { id:3, title:"MediConnect",        cat:"HealthTech", loc:"Accra, GH",   raised:150, goal:300, equity:"15%", val:"1.2B FCFA",  days:31, hot:false, img:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop&q=80" },
 ];
 
-const CLIP_DURATION = 6;   // seconds per video
-const CROSSFADE_MS  = 300; // crossfade in milliseconds
-  
+
+
 const TABS = [
   { id:"investor", icon:"📈", label:"Investors", color:"#7C3AED",
     title:"Own equity in Africa's next unicorns",
@@ -40,139 +40,41 @@ const STEPS = [
   { n:"04", icon:"🔒", title:"Escrow, Sign & Done", body:"Investor pays into escrow. Both parties sign the auto-generated legal PDF agreement. Admin validates. Funds released to creator." },
 ];
 
-/* ── VIDEO CAROUSEL — seamless dual-video crossfade ── */
-
+/* ── VIDEO CAROUSEL ── */
 function HeroCarousel() {
-  const [activeSlot, setActiveSlot] = useState(0);
-  const [dotIdx, setDotIdx] = useState(0);
-  const refA = useRef(null);
-  const refB = useRef(null);
-  const curIdx = useRef(0);
-  const switching = useRef(false);
-  const allVideos = useRef([]);
+  const [current, setCurrent] = useState(0);
+  const [next, setNext] = useState(1);
+  const [showNext, setShowNext] = useState(false);
 
   useEffect(() => {
-    const A = refA.current;
-    const B = refB.current;
-    if (!A || !B) return;
-
-    const getNext = (idx) => (idx + 1) % VIDEOS.length;
-
-    // Preload ALL videos into hidden elements immediately
-    allVideos.current = VIDEOS.map((src, i) => {
-      const v = document.createElement("video");
-      v.src = src;
-      v.preload = "auto";
-      v.muted = true;
-      v.playsInline = true;
-      v.crossOrigin = "anonymous";
-      v.load();
-      return v;
+    IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
     });
-
-    // Also add <link rel="preload"> hints for the browser
-    VIDEOS.forEach((src) => {
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "video";
-      link.href = src;
-      document.head.appendChild(link);
-    });
-
-    // Wait for a video to be ready to play
-    const waitReady = (vid, timeout = 8000) =>
-      new Promise((resolve) => {
-        if (vid.readyState >= 3) return resolve();
-        const onReady = () => {
-          vid.removeEventListener("canplay", onReady);
-          vid.removeEventListener("canplaythrough", onReady);
-          resolve();
-        };
-        vid.addEventListener("canplay", onReady);
-        vid.addEventListener("canplaythrough", onReady);
-        setTimeout(resolve, timeout);
-      });
-
-    // Load first two videos into the two slots
-    A.src = VIDEOS[0];
-    A.preload = "auto";
-    A.crossOrigin = "anonymous";
-    A.load();
-
-    B.src = VIDEOS[1 % VIDEOS.length];
-    B.preload = "auto";
-    B.crossOrigin = "anonymous";
-    B.load();
-
-    const switchToNext = async () => {
-      if (switching.current) return;
-      switching.current = true;
-
-      const nextIdx = getNext(curIdx.current);
-      const afterNextIdx = getNext(nextIdx);
-      const isAOnTop = curIdx.current % 2 === 0;
-      const incoming = isAOnTop ? B : A;
-      const outgoing = isAOnTop ? A : B;
-
-      // Wait for incoming to be ready — max 3 seconds
-      await waitReady(incoming, 3000);
-
-      // Switch instantly
-      incoming.currentTime = 0;
-      await incoming.play().catch(() => {});
-
-      // Update UI — crossfade
-      setActiveSlot(isAOnTop ? 1 : 0);
-      setDotIdx(nextIdx);
-      curIdx.current = nextIdx;
-
-      // Load the video after next into outgoing slot immediately
-      setTimeout(() => {
-        outgoing.src = VIDEOS[afterNextIdx];
-        outgoing.preload = "auto";
-        outgoing.crossOrigin = "anonymous";
-        outgoing.load();
-      }, CROSSFADE_MS + 100);
-
-      switching.current = false;
-    };
-
-    // Use timeupdate to switch BEFORE video ends — seamless transition
-    const handleTimeUpdateA = () => {
-      if (!A.duration) return;
-      const timeLeft = A.duration - A.currentTime;
-      const isAActive = curIdx.current % 2 === 0;
-      if (isAActive && (timeLeft <= CROSSFADE_MS / 1000 || A.currentTime >= CLIP_DURATION)) {
-        switchToNext();
-      }
-    };
-
-    const handleTimeUpdateB = () => {
-      if (!B.duration) return;
-      const timeLeft = B.duration - B.currentTime;
-      const isBActive = curIdx.current % 2 === 1;
-      if (isBActive && (timeLeft <= CROSSFADE_MS / 1000 || B.currentTime >= CLIP_DURATION)) {
-        switchToNext();
-      }
-    };
-
-    A.addEventListener("timeupdate", handleTimeUpdateA);
-    B.addEventListener("timeupdate", handleTimeUpdateB);
-
-    // Start playing once A is ready
-    waitReady(A, 10000).then(() => {
-      A.currentTime = 0;
-      A.play().catch(() => {});
-    });
-
-    return () => {
-      A.removeEventListener("timeupdate", handleTimeUpdateA);
-      B.removeEventListener("timeupdate", handleTimeUpdateB);
-      allVideos.current.forEach((v) => {
-        v.src = "";
-      });
-    };
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const nextIdx = (current + 1) % IMAGES.length;
+      setNext(nextIdx);
+      setShowNext(false);
+
+      // Small delay to ensure next image is painted before fading in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setShowNext(true);
+        });
+      });
+
+      setTimeout(() => {
+        setCurrent(nextIdx);
+        setShowNext(false);
+      }, IMAGE_CROSSFADE);
+
+    }, IMAGE_DURATION);
+
+    return () => clearInterval(timer);
+  }, [current]);
 
   return (
     <div style={{
@@ -182,60 +84,72 @@ function HeroCarousel() {
       overflow: "hidden",
       background: "#0D0621",
     }}>
-      {/* Slot A */}
-      <video
-        ref={refA}
-        muted
-        playsInline
-        preload="auto"
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          opacity: activeSlot === 0 ? 1 : 0,
-          transition: `opacity ${CROSSFADE_MS}ms ease-in-out`,
-          zIndex: activeSlot === 0 ? 2 : 1,
-        }}
-      />
-      {/* Slot B */}
-      <video
-        ref={refB}
-        muted
-        playsInline
-        preload="auto"
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          opacity: activeSlot === 1 ? 1 : 0,
-          transition: `opacity ${CROSSFADE_MS}ms ease-in-out`,
-          zIndex: activeSlot === 1 ? 2 : 1,
-        }}
-      />
+
+      {/* Base layer — current image always visible */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: `url(${IMAGES[current]})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        zIndex: 1,
+      }} />
+
+      {/* Top layer — next image fading in over current */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: `url(${IMAGES[next]})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        opacity: showNext ? 1 : 0,
+        transition: showNext ? `opacity ${IMAGE_CROSSFADE}ms ease-in-out` : "none",
+        zIndex: 2,
+      }} />
+
+      {/* Purple brand overlay */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        background: "linear-gradient(135deg, rgba(13,6,33,0.35) 0%, rgba(76,29,149,0.25) 100%)",
+        zIndex: 3,
+      }} />
+
+      {/* Bottom gradient */}
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 120,
+        background: "linear-gradient(to bottom, transparent, rgba(13,6,33,0.3))",
+        zIndex: 4,
+      }} />
+
       {/* Dot indicators */}
       <div style={{
         position: "absolute",
-        bottom: 20,
+        bottom: 24,
         left: "50%",
         transform: "translateX(-50%)",
         display: "flex",
         gap: 8,
         zIndex: 10,
       }}>
-        {VIDEOS.map((_, i) => (
-          <div key={i} style={{
-            width: i === dotIdx ? 24 : 8,
-            height: 8,
-            borderRadius: 4,
-            background: i === dotIdx ? "white" : "rgba(255,255,255,0.4)",
-            transition: "all 0.3s ease",
-          }} />
+        {IMAGES.map((_, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{
+              width: i === current ? 28 : 8,
+              height: 8,
+              borderRadius: 4,
+              background: i === current ? "white" : "rgba(255,255,255,0.35)",
+              transition: "all 0.4s ease",
+              cursor: "pointer",
+              boxShadow: i === current ? "0 0 8px rgba(255,255,255,0.5)" : "none",
+            }}
+          />
         ))}
       </div>
     </div>
@@ -383,7 +297,7 @@ export default function LandingPage() {
 
         {/* LEFT */}
         <div style={{
-          background:"blue",
+          background:"#7C3AED",
           padding:"140px 60px 80px 48px", position:"relative",
           overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"center",
         }}>
@@ -481,10 +395,10 @@ export default function LandingPage() {
 
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:3 }}>
             {[
-              { value:`${count.m}B+ FCFA`, label:"Capital Raised",      sub:"Across all projects",  icon:"💰", even:true  },
-              { value:`${count.p}+`,   label:"Active Projects",     sub:"Across 12 countries",  icon:"🚀", even:false },
+              { value:`${count.m}B+ FCFA`, label:"Capital Raised",        sub:"Across all projects",  icon:"💰", even:true  },
+              { value:`${count.p}+`,       label:"Active Projects",        sub:"Across 12 countries",  icon:"🚀", even:false },
               { value:`${count.i.toLocaleString()}+`, label:"Registered Investors", sub:"Growing daily", icon:"👥", even:false },
-              { value:`${count.c}`,    label:"African Countries",   sub:"And expanding",        icon:"🌍", even:true  },
+              { value:`${count.c}`,        label:"African Countries",      sub:"And expanding",        icon:"🌍", even:true  },
             ].map((s,i) => (
               <div key={i} style={{ background: s.even?"#F5F3FF":"white", border:"1px solid rgba(124,58,237,0.08)", padding:"36px 32px", transition:"all 0.3s ease", cursor:"default" }}
                 onMouseEnter={e => { e.currentTarget.style.background="#EDE9FE"; e.currentTarget.style.transform="translateY(-4px)"; }}
@@ -513,7 +427,6 @@ export default function LandingPage() {
           </div>
 
           <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr", gridTemplateRows:"auto auto", gap:24 }}>
-            {/* Featured large card */}
             <div style={{ gridRow:"1 / 3", background:"white", borderRadius:24, overflow:"hidden", boxShadow:"0 4px 24px rgba(124,58,237,0.06)", cursor:"pointer", transition:"all 0.4s cubic-bezier(0.23,1,0.32,1)" }}
               onClick={() => navigate("/register?role=investor")}
               onMouseEnter={e => { e.currentTarget.style.transform="translateY(-10px) scale(1.01)"; e.currentTarget.style.boxShadow="0 28px 64px rgba(124,58,237,0.18)"; setHovered(1); }}
@@ -558,7 +471,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Small cards */}
             {PROJECTS.slice(1,3).map(p => (
               <div key={p.id} style={{ background:"white", borderRadius:24, overflow:"hidden", boxShadow:"0 4px 24px rgba(124,58,237,0.06)", cursor:"pointer", transition:"all 0.4s cubic-bezier(0.23,1,0.32,1)" }}
                 onClick={() => navigate("/register?role=investor")}

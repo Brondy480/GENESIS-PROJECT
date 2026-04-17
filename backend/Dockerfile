@@ -1,5 +1,5 @@
 # We start from an official Node.js image (like a clean computer with Node already installed)
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
